@@ -51,7 +51,3 @@ MMMEngine::Object::~Object()
 #endif
 }
 
-void MMMEngine::Object::Destroy(MMMEngine::ObjectPtr<MMMEngine::Object> objPtr)
-{
-	ObjectManager::Get()->Destroy(objPtr);
-}

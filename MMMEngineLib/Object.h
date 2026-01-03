@@ -37,7 +37,8 @@ namespace MMMEngine
 		template<typename T, typename ...Args>
         static ObjectPtr<T> CreateInstance(Args && ...args);
 
-		static void Destroy(ObjectPtr<Object> objPtr);
+        template<typename T>
+		static void Destroy(ObjectPtr<T> objPtr);
 
 		inline uint64_t				GetInstanceID() const { return m_instanceID; }
 
@@ -56,9 +57,16 @@ namespace MMMEngine
         RTTR_REGISTRATION_FRIEND
     public:
         virtual Object* GetRaw() const = 0;
-        virtual bool IsValid() const = 0;
         virtual uint32_t GetHandleID() const = 0;
         virtual uint32_t GetGeneration() const = 0;
+        virtual bool IsValid() const = 0;
+        
+        virtual bool IsSameObject(const ObjectPtrBase& other) const = 0;
+
+        virtual bool operator==(const ObjectPtrBase& other) const = 0;
+        virtual bool operator!=(const ObjectPtrBase& other) const = 0;
+        virtual bool operator==(std::nullptr_t) const = 0;
+        virtual bool operator!=(std::nullptr_t) const = 0;
     };
 
     template<typename T>
@@ -115,13 +123,24 @@ namespace MMMEngine
             return !(*this == other);
         }
 
+        virtual bool operator==(const ObjectPtrBase& other) const override
+        {
+            return m_handleID == other.GetHandleID() &&
+                m_handleGeneration == other.GetGeneration();
+        }
+
+        virtual bool operator!=(const ObjectPtrBase& other) const override
+        {
+            return !(*this == other);
+        }
+
         // === nullptr 비교 (null 핸들 검사) ===
-        bool operator==(std::nullptr_t) const
+        virtual bool operator==(std::nullptr_t) const override
         {
             return m_handleID == UINT32_MAX;  // null 핸들
         }
 
-        bool operator!=(std::nullptr_t) const
+        virtual bool operator!=(std::nullptr_t) const override
         {
             return m_handleID != UINT32_MAX;
         }
@@ -131,6 +150,14 @@ namespace MMMEngine
             T* p1 = Get();
             T* p2 = other.Get();
             return p1 && p2 && p1 == p2;
+        }
+
+        virtual bool IsSameObject(const ObjectPtrBase& other) const override
+        {
+            return IsValid() && 
+                ObjectManager::Get()->IsValidHandle(other.GetHandleID(),other.GetGeneration(),other.GetRaw()) &&
+                m_handleID == other.GetHandleID() &&
+                m_handleGeneration == other.GetGeneration();
         }
 
         explicit operator bool() const { return IsValid(); }
