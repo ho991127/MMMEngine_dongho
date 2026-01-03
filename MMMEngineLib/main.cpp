@@ -72,8 +72,9 @@ int main()
 	{
 		auto obj = class_type.create().get_value<ObjectPtr<GameObject>>();
 		std::cout << obj->GetName() << std::endl;
+
+		obj.GetGeneration();
 	}
-	
 
 	return 0;
 }

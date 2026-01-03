@@ -20,7 +20,7 @@ RTTR_REGISTRATION
 
 	registration::class_<ObjectPtrBase>("ObjectPtr")
 		.method("IsValid", &ObjectPtrBase::IsValid)
-		.method("Get", &ObjectPtrBase::GetRaw)
+		.method("GetBase", &ObjectPtrBase::GetBase, registration::private_access)
 		.method("GetHandleID", &ObjectPtrBase::GetHandleID)
 		.method("GetGeneration", &ObjectPtrBase::GetGeneration);
 

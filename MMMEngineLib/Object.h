@@ -2,6 +2,7 @@
 #include "rttr/type"
 #include "rttr/registration_friend.h"
 #include "GUID.h"
+#include <cassert>
 
 namespace MMMEngine
 {
@@ -55,11 +56,15 @@ namespace MMMEngine
     private:
         RTTR_ENABLE()
         RTTR_REGISTRATION_FRIEND
+
+        template<typename T>
+        friend class ObjectPtr;
+
+        virtual Object* GetBase() const = 0;
     public:
-        virtual Object* GetRaw() const = 0;
-        virtual uint32_t GetHandleID() const = 0;
-        virtual uint32_t GetGeneration() const = 0;
-        virtual bool IsValid() const = 0;
+        virtual uint32_t    GetHandleID() const = 0;
+        virtual uint32_t    GetGeneration() const = 0;
+        virtual bool        IsValid() const = 0;
         
         virtual bool IsSameObject(const ObjectPtrBase& other) const = 0;
 
@@ -76,12 +81,20 @@ namespace MMMEngine
         RTTR_ENABLE(ObjectPtrBase)
         RTTR_REGISTRATION_FRIEND
         friend class ObjectManager;
-
-        virtual Object* GetRaw() const override { return m_ptr; }
+        friend class ObjectSerializer;
 
         T* m_ptr = nullptr;
         uint32_t m_handleID = UINT32_MAX;
         uint32_t m_handleGeneration = 0;
+
+        virtual Object* GetBase() const override { return m_ptr; }
+
+        T* Get() const
+        {
+            if (!IsValid())
+                return nullptr;
+            return m_ptr;
+        }
 
         // private 생성자 - ObjectManager만 생성 가능
         ObjectPtr(T* ptr, uint32_t id, uint32_t gen)
@@ -97,19 +110,23 @@ namespace MMMEngine
 
         // 복사/이동은 허용
         ObjectPtr(const ObjectPtr&) = default;
-        ObjectPtr(ObjectPtr&&) = default;
+        ObjectPtr(ObjectPtr&&) noexcept = default;
         ObjectPtr& operator=(const ObjectPtr&) = default;
-        ObjectPtr& operator=(ObjectPtr&&) = default;
+        ObjectPtr& operator=(ObjectPtr&&) noexcept = default;
 
-        T* Get() const
+        T& operator*() const 
         {
-            if (!IsValid())
-                return nullptr;
-            return m_ptr;
+            T* ptr = Get();
+            assert(ptr && "ObjectPtr의 역참조가 잘못되었습니다!");
+            return *ptr;
         }
 
-        T& operator*() const { return *Get(); }
-        T* operator->() const { return Get(); }
+        T* operator->() const
+        {
+            T* ptr = Get();
+            assert(ptr && "유효하지 않은 ObjectPtr에 접근했습니다!");
+            return ptr;
+        }
 
         bool operator==(const ObjectPtr<T>& other) const
         {
@@ -147,17 +164,26 @@ namespace MMMEngine
 
         bool IsSameObject(const ObjectPtr<T>& other) const
         {
-            T* p1 = Get();
-            T* p2 = other.Get();
-            return p1 && p2 && p1 == p2;
+            // 같은 핸들이면 같은 객체
+            if (m_handleID != other.m_handleID ||
+                m_handleGeneration != other.m_handleGeneration)
+                return false;
+
+            return IsValid() && other.IsValid();
         }
 
         virtual bool IsSameObject(const ObjectPtrBase& other) const override
         {
-            return IsValid() && 
-                ObjectManager::Get().IsValidHandle(other.GetHandleID(),other.GetGeneration(),other.GetRaw()) &&
-                m_handleID == other.GetHandleID() &&
-                m_handleGeneration == other.GetGeneration();
+            if (m_handleID != other.GetHandleID() ||
+                m_handleGeneration != other.GetGeneration())
+                return false;
+
+            return IsValid() &&
+                ObjectManager::Get().IsValidHandle(
+                    other.GetHandleID(),
+                    other.GetGeneration(),
+                    other.GetBase()
+                );
         }
 
         explicit operator bool() const { return IsValid(); }
