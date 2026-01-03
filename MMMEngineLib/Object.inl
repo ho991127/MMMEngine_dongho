@@ -15,4 +15,25 @@ namespace MMMEngine
     {
         ObjectManager::Get().Destroy(objPtr);
     }
+
+    template<typename T>
+    bool MMMEngine::ObjectPtr<T>::IsValid() const
+    {
+        return ObjectManager::Get().IsValidPtr(m_ptrID, m_ptrGeneration, m_raw);
+    }
+
+    template<typename T>
+    bool MMMEngine::ObjectPtr<T>::IsSameObject(const ObjectPtrBase& other) const
+    {
+        if (m_ptrID != other.GetPtrID() ||
+            m_ptrGeneration != other.GetPtrGeneration())
+            return false;
+
+        return IsValid() &&
+            ObjectManager::Get().IsValidPtr(
+                other.GetPtrID(),
+                other.GetPtrGeneration(),
+                other.GetBase()
+            );
+    }
 }

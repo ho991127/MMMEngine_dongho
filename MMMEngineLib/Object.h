@@ -172,26 +172,11 @@ namespace MMMEngine
             return IsValid() && other.IsValid();
         }
 
-        virtual bool IsSameObject(const ObjectPtrBase& other) const override
-        {
-            if (m_ptrID != other.GetPtrID() ||
-                m_ptrGeneration != other.GetPtrGeneration())
-                return false;
-
-            return IsValid() &&
-                ObjectManager::Get().IsValidPtr(
-                    other.GetPtrID(),
-                    other.GetPtrGeneration(),
-                    other.GetBase()
-                );
-        }
+        virtual bool IsSameObject(const ObjectPtrBase& other) const override;
 
         explicit operator bool() const { return IsValid(); }
 
-        virtual bool IsValid() const override
-        {
-            return ObjectManager::Get().IsValidPtr(m_ptrID, m_ptrGeneration, m_raw);
-        }
+        virtual bool IsValid() const override;
 
         virtual uint32_t GetPtrID() const override { return m_ptrID; }
         virtual uint32_t GetPtrGeneration() const override { return m_ptrGeneration; }
