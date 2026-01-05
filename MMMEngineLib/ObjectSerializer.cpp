@@ -1,4 +1,4 @@
-#include "ObjectSerializer.h"
+﻿#include "ObjectSerializer.h"
 #include "Object.h"
 
 json MMMEngine::ObjectSerializer::Serialize(const variant& objectHandle)
@@ -42,19 +42,19 @@ std::optional<json> MMMEngine::ObjectSerializer::SerializeVariant(const variant&
 {
     rttr::type t = var.get_type();
 
-    // 1. ObjectPtr<T> → 타입명 + GUID만 저장
+    // ObjectPtr<T> -> 타입명 + GUID만 저장
     if (t.is_derived_from<ObjectPtrBase>())
     {
         return SerializeObjectPtr(var);
     }
 
-    // 2. Sequential Container (std::vector 등)
+    // Sequential Container (std::vector 등)
     if (t.is_sequential_container())
     {
         return SerializeSequentialContainer(var);
     }
 
-    // 3. 기본형
+    // 기본형
     if (t.is_arithmetic())
     {
         json j;
@@ -63,20 +63,20 @@ std::optional<json> MMMEngine::ObjectSerializer::SerializeVariant(const variant&
         return j;
     }
 
-    // 4. std::string
+    // std::string
     if (t == rttr::type::get<std::string>())
     {
         return var.get_value<std::string>();
     }
 
-    // 5. enum
+    // enum
     if (t.is_enumeration())
     {
         auto e = t.get_enumeration();
         return e.value_to_name(var).to_string();
     }
 
-    // 6. 사용자 정의 클래스 (Vector3, Quaternion 등)
+    // 사용자 정의 클래스 (Vector3, Quaternion 등)
     if (t.is_class())
     {
         json obj = json::object();
@@ -213,19 +213,19 @@ bool MMMEngine::ObjectSerializer::DeserializeVariant(const json& j, variant& var
 {
     rttr::type t = var.get_type();
 
-    // 1. ObjectPtr<T> → null ObjectPtr만 생성 (GUID는 무시)
+    // ObjectPtr<T> -> null ObjectPtr만 생성 (GUID는 무시)
     if (t.is_derived_from<ObjectPtrBase>())
     {
         return DeserializeObjectPtr(j, var);
     }
 
-    // 2. Sequential Container
+    // Sequential Container
     if (t.is_sequential_container())
     {
         return DeserializeSequentialContainer(j, var);
     }
 
-    // 3. 기본형
+    // 기본형
     if (j.is_object() && j.contains("__type") && j.contains("__value"))
     {
         std::string typeName = j["__type"];
@@ -243,7 +243,7 @@ bool MMMEngine::ObjectSerializer::DeserializeVariant(const json& j, variant& var
         return true;
     }
 
-    // 4. std::string
+    // std::string
     if (t == rttr::type::get<std::string>())
     {
         if (!j.is_string())
@@ -253,7 +253,7 @@ bool MMMEngine::ObjectSerializer::DeserializeVariant(const json& j, variant& var
         return true;
     }
 
-    // 5. enum
+    // enum
     if (t.is_enumeration())
     {
         if (!j.is_string())
@@ -268,7 +268,7 @@ bool MMMEngine::ObjectSerializer::DeserializeVariant(const json& j, variant& var
         return true;
     }
 
-    // 6. 사용자 정의 클래스
+    // 사용자 정의 클래스
     if (t.is_class() && j.is_object())
     {
         rttr::instance inst = var;
