@@ -10,6 +10,9 @@ namespace MMMEngine
 	class Object
 	{
 	private:
+        RTTR_ENABLE()
+        RTTR_REGISTRATION_FRIEND
+
 		friend class ObjectManager;
         friend class ObjectSerializer;
 
@@ -17,9 +20,6 @@ namespace MMMEngine
 		friend class ObjectPtr;
         friend class ObjectPtrBase;
 		
-		RTTR_ENABLE()
-		RTTR_REGISTRATION_FRIEND
-
 		static uint64_t s_nextInstanceID;
 
         uint32_t        m_ptrID;
@@ -71,16 +71,14 @@ namespace MMMEngine
     private:
         RTTR_ENABLE()
         RTTR_REGISTRATION_FRIEND
-
         template<typename T>
         friend class ObjectPtr;
         friend class ObjectManager;
         friend class ObjectSerializer;
 
-        virtual void Reset() = 0;
-
-        virtual Object* GetBase() const = 0;
+        virtual void* GetRaw() const = 0;
     public:
+        virtual void Reset() = 0;
         virtual uint32_t    GetPtrID() const = 0;
         virtual uint32_t    GetPtrGeneration() const = 0;
         virtual bool        IsValid() const = 0;
@@ -97,8 +95,6 @@ namespace MMMEngine
     class ObjectPtr final : public ObjectPtrBase
     {
     private:
-        RTTR_ENABLE(ObjectPtrBase)
-        RTTR_REGISTRATION_FRIEND
         friend class ObjectManager;
         friend class ObjectSerializer;
 
@@ -106,7 +102,7 @@ namespace MMMEngine
         uint32_t m_ptrID = UINT32_MAX;
         uint32_t m_ptrGeneration = 0;
 
-        virtual Object* GetBase() const override { return m_raw; }
+        virtual void* GetRaw() const override { return m_raw; }
 
         T* Get() const
         {

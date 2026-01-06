@@ -28,7 +28,7 @@ namespace MMMEngine
             ObjectManager::Get().IsValidPtr(
                 other.GetPtrID(),
                 other.GetPtrGeneration(),
-                other.GetBase()
+                other.GetRaw()
             );
     }
 
@@ -48,7 +48,10 @@ namespace MMMEngine
     template<typename T>
     ObjectPtr<T> Object::SelfPtr(T* self)
     {
-        assert(self == this && "Self의 인자가 자신이 아닙니다!");
-        return ObjectManager::Get().GetPtrFast<T>(this, m_ptrID, m_ptrGen);
+#ifndef NDEBUG
+        static_assert(std::is_base_of_v<Object, T>, "SelfPtr<T> : T는 Object를 상속받아야합니다.");
+        assert(static_cast<Object*>(self) == this && "SelfPtr의 인자가 자신이 아닙니다!");
+#endif
+        return ObjectManager::Get().GetPtrFast<T>(static_cast<T*>(this), m_ptrID, m_ptrGen);
     }
 }

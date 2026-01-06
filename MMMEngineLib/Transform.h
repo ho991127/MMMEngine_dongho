@@ -3,7 +3,6 @@
 #include "rttr/type"
 #include "SimpleMath.h"
 #include "Delegates.hpp"
-#include "GameObject.h"
 
 using namespace DirectX::SimpleMath;
 
@@ -12,11 +11,11 @@ namespace MMMEngine
 	class Transform : public Component
 	{
 	private:
+		RTTR_ENABLE(MMMEngine::Component)
+		RTTR_REGISTRATION_FRIEND
 		friend class App;
 		friend class ObjectManager;
 		friend class GameObject;
-		RTTR_ENABLE(MMMEngine::Object)
-		RTTR_REGISTRATION_FRIEND
 		
 		Vector3 m_localPosition;
 		Quaternion m_localRotation;

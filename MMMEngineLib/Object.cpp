@@ -21,15 +21,15 @@ RTTR_REGISTRATION
 
 	registration::class_<ObjectPtrBase>("ObjectPtr")
 		.method("IsValid", &ObjectPtrBase::IsValid)
-		.method("GetBase", &ObjectPtrBase::GetBase, registration::private_access)
+		.method("GetRaw", &ObjectPtrBase::GetRaw, registration::private_access)
 		.method("GetPtrID", &ObjectPtrBase::GetPtrID)
 		.method("GetPtrGeneration", &ObjectPtrBase::GetPtrGeneration);
 
 	registration::class_<ObjectPtr<Object>>("ObjectPtr<Object>")
 		.constructor<>(
-			[]() {
-				return Object::CreatePtr<Object>();
-			}, registration::protected_access);
+			[]() { 
+				return Object::CreatePtr<Object>(); 
+			});
 }
 
 MMMEngine::Object::Object() : m_instanceID(s_nextInstanceID++)

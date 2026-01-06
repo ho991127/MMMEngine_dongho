@@ -80,14 +80,17 @@ int main()
 	auto FooObj = Object::CreatePtr<FooObject>();
 	FooObj->Foo();
 
-	type class_type = type::get_by_name("ObjectPtr<GameObject>");
+	auto go = Object::CreatePtr<GameObject>();
+	auto ptrType = "ObjectPtr<" + (*go).get_type().get_name().to_string() + ">";
+
+	type class_type = type::get_by_name(ptrType);
 	if (class_type)
 	{
-		auto obj = class_type.create().get_value<ObjectPtr<GameObject>>();
+		auto obj = class_type.create({ std::string{"overload"} }).get_value<ObjectPtr<GameObject>>();
 		std::cout << obj->GetName() << std::endl;
 
 		std::cout << (*obj).GetGUID() << std::endl;
-	
+
 		Object::Destroy(obj);
 
 		if (obj)
@@ -96,7 +99,7 @@ int main()
 			std::cout << "Destroyed!" << std::endl;
 	}
 
-	
+	auto s = go.get_type().get_name().to_string();
 
 	auto a = Object::CreatePtr<RollObject>();
 	if(a) // È¤Àº a.IsValid()

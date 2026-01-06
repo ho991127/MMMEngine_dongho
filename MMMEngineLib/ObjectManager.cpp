@@ -76,18 +76,20 @@ bool MMMEngine::ObjectManager::IsDestroyingObject() const
     return m_isDestroyingObject;
 }
 
-bool MMMEngine::ObjectManager::IsValidPtr(uint32_t ptrID, uint32_t generation, const Object* ptr) const
+bool MMMEngine::ObjectManager::IsValidPtr(uint32_t ptrID, uint32_t generation, const void* ptr) const
 {
     if (ptrID >= m_objectPtrInfos.size())
         return false;
 
-    if (m_objectPtrInfos[ptrID].raw != ptr)
+    Object* stored = m_objectPtrInfos[ptrID].raw;
+
+    if (static_cast<const void*>(stored) != ptr)
         return false;
 
     if (m_objectPtrInfos[ptrID].ptrGenerations != generation)
         return false;
 
-    if (ptr && ptr->IsDestroyed())
+    if (ptr && stored->IsDestroyed())
         return false;
 
     return true;

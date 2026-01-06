@@ -1,4 +1,19 @@
 #include "Transform.h"
+#include "rttr/registration"
+
+RTTR_REGISTRATION
+{
+	using namespace rttr;
+	using namespace MMMEngine;
+
+	registration::class_<Transform>("Transform");
+
+	registration::class_<ObjectPtr<Transform>>("ObjectPtr<Transform>")
+		.constructor<>(
+			[]() {
+				return Object::CreatePtr<Transform>();
+			});
+}
 
 void MMMEngine::Transform::AddChild(ObjectPtr<Transform> child)
 {

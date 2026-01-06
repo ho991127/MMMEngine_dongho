@@ -70,8 +70,9 @@ namespace MMMEngine
             }
         };
 
-        bool IsValidPtr(uint32_t ptrID, uint32_t generation, const Object* ptr) const;
+        bool IsValidPtr(uint32_t ptrID, uint32_t generation, const void* ptr) const;
 
+        // SelfPtr<T>의 빠른 구현을 위한 함수, 절대 외부 호출하지 말 것
         template<typename T>
         ObjectPtr<T> GetPtrFast(Object* raw, uint32_t ptrID, uint32_t ptrGen)
         {
@@ -79,7 +80,7 @@ namespace MMMEngine
         }
 
         template<typename T>
-        ObjectPtr<T> GetPtr(uint32_t ptrID)
+        ObjectPtr<T> GetPtr(uint32_t ptrID, uint32_t ptrGen)
         {
             if (ptrID >= m_objectPtrInfos.size())
                 return ObjectPtr<T>();
@@ -92,9 +93,10 @@ namespace MMMEngine
             T* typedObj = dynamic_cast<T*>(obj);
             assert(typedObj && "GetPtr<T>: 타입 불일치! ptrID에 들어있는 실제 타입을 확인하세요.");
 #endif
+            if(m_objectPtrInfos[ptrID].ptrGenerations != ptrGen)
+                return ObjectPtr<T>();
 
-            uint32_t generation = m_objectPtrInfos[ptrID].ptrGenerations;
-            return ObjectPtr<T>(static_cast<T*>(obj), ptrID, generation);
+            return ObjectPtr<T>(static_cast<T*>(obj), ptrID, ptrGen);
         }
 
         template<typename T>

@@ -2,25 +2,25 @@
 #include "rttr/registration"
 #include "rttr/detail/policies/ctor_policies.h"
 #include "Component.h"
-
+#include "Transform.h"
+#include <cmath>
 
 RTTR_REGISTRATION
 {
 	using namespace rttr;
 	using namespace MMMEngine;
 
-	registration::class_<GameObject>("GameObject");
-
+    registration::class_<GameObject>("GameObject");
 
 	registration::class_<ObjectPtr<GameObject>>("ObjectPtr<GameObject>")
-        .constructor(
-			[](const std::string& name) {
-				return Object::CreatePtr<GameObject>(name);
-			}, registration::protected_access)
-		.constructor<>(
-			[]() {
-				return Object::CreatePtr<GameObject>();
-			}, registration::protected_access);
+		.constructor(
+   			[](const std::string& name) {
+   				return Object::CreatePtr<GameObject>(name);
+   			})
+   	    .constructor<>(
+   		    []() {
+   			    return Object::CreatePtr<GameObject>();
+   		    });
 }
 
 MMMEngine::GameObject::GameObject(std::string name)

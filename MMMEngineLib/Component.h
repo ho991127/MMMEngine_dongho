@@ -4,15 +4,14 @@
 
 namespace MMMEngine
 {
-	class GameObject;
 	class Component : public Object
 	{
 	private:
+		RTTR_ENABLE(MMMEngine::Object)
+		RTTR_REGISTRATION_FRIEND
 		friend class App;
 		friend class ObjectManager;
 		friend class GameObject;
-		RTTR_ENABLE(MMMEngine::Object)
-		RTTR_REGISTRATION_FRIEND
 
 		ObjectPtr<GameObject> m_owner;
 	protected:
