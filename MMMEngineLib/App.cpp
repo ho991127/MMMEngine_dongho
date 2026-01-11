@@ -74,12 +74,12 @@ void MMMEngine::Utility::App::SetProcessHandle(HINSTANCE hinstance)
 	m_hInstance = hinstance;
 }
 
-MMMEngine::Utility::App::WindowInfo MMMEngine::Utility::App::GetWindowInfo()
+const MMMEngine::Utility::App::WindowInfo MMMEngine::Utility::App::GetWindowInfo() const
 {
 	return m_windowInfo;
 }
 
-HWND MMMEngine::Utility::App::GetWindowHandle()
+HWND MMMEngine::Utility::App::GetWindowHandle() const
 {
 	return m_hWnd;
 }
@@ -138,7 +138,7 @@ bool MMMEngine::Utility::App::CreateMainWindow()
 	m_hWnd = CreateWindowEx(
 		0,
 		wc.lpszClassName,
-		m_windowInfo.title,
+		m_windowInfo.title.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		clientRect.right - clientRect.left,
@@ -154,14 +154,14 @@ bool MMMEngine::Utility::App::CreateMainWindow()
 	return true;
 }
 
-void MMMEngine::Utility::App::SetTitle(LPCWSTR title)
+void MMMEngine::Utility::App::SetTitle(const std::wstring& title)
 {
 	m_windowInfo.title = title;
 
 	// 윈도우가 이미 생성되어 있으면 즉시 제목 변경
 	if (m_hWnd)
 	{
-		SetWindowTextW(m_hWnd, title);
+		SetWindowTextW(m_hWnd, m_windowInfo.title.c_str());
 	}
 }
 

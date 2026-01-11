@@ -14,7 +14,7 @@ namespace MMMEngine::Utility
 	public:
 		struct WindowInfo
 		{
-			LPCWSTR title;
+			std::wstring title;
 			LONG width;
 			LONG height;
 			LONG style;
@@ -28,7 +28,7 @@ namespace MMMEngine::Utility
 		int Run();
 		void Quit();
 
-		void SetTitle(LPCWSTR title);
+		void SetTitle(const std::wstring& title);
 
 		Event<App, void(void)> OnInitialize{ this };
 		Event<App, void(void)> OnShutdown{ this };
@@ -37,8 +37,8 @@ namespace MMMEngine::Utility
 		Event<App, void(int,int)> OnWindowInfoChanged{ this };
 
 		void SetProcessHandle(HINSTANCE hinstance);
-		WindowInfo GetWindowInfo();
-		HWND GetWindowHandle();
+		const WindowInfo GetWindowInfo() const;
+		HWND GetWindowHandle() const;
 	protected:
 		LRESULT HandleWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	private:
