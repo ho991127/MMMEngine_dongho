@@ -154,6 +154,18 @@ bool MMMEngine::Utility::App::CreateMainWindow()
 	return true;
 }
 
+void MMMEngine::Utility::App::SetTitle(LPCWSTR title)
+{
+	m_windowInfo.title = title;
+
+	// 윈도우가 이미 생성되어 있으면 즉시 제목 변경
+	if (m_hWnd)
+	{
+		SetWindowTextW(m_hWnd, title);
+	}
+}
+
+
 LRESULT MMMEngine::Utility::App::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_NCCREATE) {

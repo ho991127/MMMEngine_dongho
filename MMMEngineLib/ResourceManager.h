@@ -59,7 +59,6 @@ namespace MMMEngine
 
 		void ClearCache() { m_cache.clear(); }
 
-
 		template<class T>
 		ResPtr<T> Load(std::string_view sourcePath)
 		{

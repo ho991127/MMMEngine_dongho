@@ -28,6 +28,8 @@ namespace MMMEngine::Utility
 		int Run();
 		void Quit();
 
+		void SetTitle(LPCWSTR title);
+
 		Event<App, void(void)> OnInitialize{ this };
 		Event<App, void(void)> OnShutdown{ this };
 		Event<App, void(void)> OnUpdate{ this };

@@ -5,7 +5,11 @@
 #include "PlayerRegistry.h"
 #include "App.h"
 
+#include "MMMApplication.h"
+#include "MMMTime.h"
+
 #include "InputManager.h"
+#include "TimeManager.h"
 #include "ResourceManager.h"
 
 using namespace MMMEngine;
@@ -22,6 +26,18 @@ void Init()
 void Update()
 {
 	InputManager::Get().Update();
+	TimeManager::Get().BeginFrame();
+	TimeManager::Get().ConsumeFixedSteps([&](float fixedDt)
+	{
+		Application::SetTitle(L"fps : " + std::to_wstring(1.0f / Time::GetDeltaTime()));
+
+		//PhysicsManager::Get()->PreSyncPhysicsWorld();
+		//PhysicsManager::Get()->PreApplyTransform();
+		//BehaviourManager::Get()->BroadCastBehaviourMessage("FixedUpdate");
+		//PhysicsManager::Get()->Simulate(fixedDt);
+		//PhysicsManager::Get()->ApplyTransform();
+	});
+
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
