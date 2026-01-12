@@ -17,11 +17,21 @@ namespace MMMEngine::Utility
 			std::wstring title;
 			LONG width;
 			LONG height;
-			LONG style;
+			DWORD style;
+		};
+
+		struct WindowedRestore
+		{
+			DWORD style = 0;
+			DWORD exStyle = 0;
+			RECT  rect = { 0,0,0,0 };
+			bool  valid = false;
 		};
 
 		App();
+		App(HINSTANCE hInstance);
 		App(LPCWSTR title, LONG width, LONG height);
+		App(HINSTANCE hInstance,LPCWSTR title, LONG width, LONG height);
 
 		~App();
 
@@ -35,8 +45,9 @@ namespace MMMEngine::Utility
 		Event<App, void(void)> OnUpdate{ this };
 		Event<App, void(void)> OnRender{ this };
 		Event<App, void(int,int)> OnWindowInfoChanged{ this };
+		Event<App, void(HWND, UINT, WPARAM, LPARAM)> OnBeforeWindowMessage{ this };
+		Event<App, void(HWND, UINT, WPARAM, LPARAM)> OnAfterWindowMessage{ this };
 
-		void SetProcessHandle(HINSTANCE hinstance);
 		const WindowInfo GetWindowInfo() const;
 		HWND GetWindowHandle() const;
 	protected:

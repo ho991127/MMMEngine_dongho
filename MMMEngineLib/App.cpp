@@ -7,7 +7,16 @@ MMMEngine::Utility::App::App()
 	, m_hWnd(NULL)
 	, m_isRunning(false)
 	, m_windowInfoDirty(false)
-	, m_windowInfo({ L"MMM Engine Application",1600,900 })
+	, m_windowInfo({ L"MMM Engine Application",1600,900,WS_OVERLAPPEDWINDOW })
+{
+}
+
+MMMEngine::Utility::App::App(HINSTANCE hInstance)
+	: m_hInstance(hInstance)
+	, m_hWnd(NULL)
+	, m_isRunning(false)
+	, m_windowInfoDirty(false)
+	, m_windowInfo({ L"MMM Engine Application",1600,900,WS_OVERLAPPEDWINDOW })
 {
 }
 
@@ -16,7 +25,16 @@ MMMEngine::Utility::App::App(LPCWSTR title, LONG width, LONG height)
 	, m_hWnd(NULL)
 	, m_isRunning(false)
 	, m_windowInfoDirty(false)
-	, m_windowInfo({ title,width,height })
+	, m_windowInfo({ title,width,height,WS_OVERLAPPEDWINDOW })
+{
+}
+
+MMMEngine::Utility::App::App(HINSTANCE hInstance, LPCWSTR title, LONG width, LONG height)
+	: m_hInstance(hInstance)
+	, m_hWnd(NULL)
+	, m_isRunning(false)
+	, m_windowInfoDirty(false)
+	, m_windowInfo({ title,width,height,WS_OVERLAPPEDWINDOW })
 {
 }
 
@@ -69,11 +87,6 @@ void MMMEngine::Utility::App::Quit()
 		PostQuitMessage(0);
 }
 
-void MMMEngine::Utility::App::SetProcessHandle(HINSTANCE hinstance)
-{
-	m_hInstance = hinstance;
-}
-
 const MMMEngine::Utility::App::WindowInfo MMMEngine::Utility::App::GetWindowInfo() const
 {
 	return m_windowInfo;
@@ -86,21 +99,21 @@ HWND MMMEngine::Utility::App::GetWindowHandle() const
 
 LRESULT MMMEngine::Utility::App::HandleWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	//#ifdef _DEBUG
-	//if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-	//	return true;
-	//#endif //_DEBUG
+	OnBeforeWindowMessage(this, hWnd, uMsg, wParam, lParam);
+
+	LRESULT result = 0;
 
 	switch (uMsg) {
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
-		return 0;
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		return 0;
+		break;
 	case WM_SIZE:
-		if (wParam == SIZE_MINIMIZED) return 0;
-		if (/*m_pD3DContext && */(wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED)) {
+		if (wParam != SIZE_MINIMIZED &&
+			(wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED)) {
+
 			RECT clientRect;
 			GetClientRect(hWnd, &clientRect);
 			LONG newWidth = clientRect.right - clientRect.left;
@@ -115,9 +128,13 @@ LRESULT MMMEngine::Utility::App::HandleWindowMessage(HWND hWnd, UINT uMsg, WPARA
 		}
 		break;
 	default:
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
+		break;
 	}
-	return 0;
+
+	OnAfterWindowMessage(this, hWnd, uMsg, wParam, lParam);
+
+	return result;
 }
 
 bool MMMEngine::Utility::App::CreateMainWindow()
@@ -139,7 +156,7 @@ bool MMMEngine::Utility::App::CreateMainWindow()
 		0,
 		wc.lpszClassName,
 		m_windowInfo.title.c_str(),
-		WS_OVERLAPPEDWINDOW,
+		m_windowInfo.style,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		clientRect.right - clientRect.left,
 		clientRect.bottom - clientRect.top,

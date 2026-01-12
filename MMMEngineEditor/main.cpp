@@ -29,7 +29,6 @@ int main()
 	App app;
 	MMMEngine::g_pApp = &app;
 
-	app.SetProcessHandle(GetModuleHandle(NULL)); //winmain으로 진입하는 경우 hIntance물려주기
 	app.OnInitialize.AddListener<&Init>();
 	app.OnUpdate.AddListener<&Update>();
 	app.Run();
