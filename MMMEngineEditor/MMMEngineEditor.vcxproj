@@ -159,6 +159,9 @@
     <ClCompile Include="FileBytesProvider.cpp" />
     <ClCompile Include="ImporterRegistry.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="main_transform_test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="MetaDB.cpp" />
     <ClCompile Include="MetaFile.cpp" />
     <ClCompile Include="PakBuilder.cpp" />

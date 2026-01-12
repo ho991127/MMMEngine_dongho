@@ -1,12 +1,34 @@
 #include "App.h"
 #include <wrl/client.h>
 
+static RECT GetMonitorRectForWindow(HWND hwnd)
+{
+	HMONITOR mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFO mi{ sizeof(mi) };
+	GetMonitorInfo(mon, &mi);
+	return mi.rcMonitor;
+}
+
+static bool IsBorderless(HWND hwnd)
+{
+	LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+	// 일반적으로 borderless는 WS_POPUP 기반
+	if (style & WS_CAPTION) return false;
+	if (style & WS_THICKFRAME) return false;
+
+	RECT wr{}, mr{};
+	GetWindowRect(hwnd, &wr);
+	mr = GetMonitorRectForWindow(hwnd);
+
+	return (wr.left == mr.left && wr.top == mr.top &&
+		wr.right == mr.right && wr.bottom == mr.bottom);
+}
 
 MMMEngine::Utility::App::App()
 	: m_hInstance(GetModuleHandle(NULL))
 	, m_hWnd(NULL)
 	, m_isRunning(false)
-	, m_windowInfoDirty(false)
+	, m_windowSizeDirty(false)
 	, m_windowInfo({ L"MMM Engine Application",1600,900,WS_OVERLAPPEDWINDOW })
 {
 }
@@ -15,7 +37,7 @@ MMMEngine::Utility::App::App(HINSTANCE hInstance)
 	: m_hInstance(hInstance)
 	, m_hWnd(NULL)
 	, m_isRunning(false)
-	, m_windowInfoDirty(false)
+	, m_windowSizeDirty(false)
 	, m_windowInfo({ L"MMM Engine Application",1600,900,WS_OVERLAPPEDWINDOW })
 {
 }
@@ -24,7 +46,7 @@ MMMEngine::Utility::App::App(LPCWSTR title, LONG width, LONG height)
 	: m_hInstance(GetModuleHandle(NULL))
 	, m_hWnd(NULL)
 	, m_isRunning(false)
-	, m_windowInfoDirty(false)
+	, m_windowSizeDirty(false)
 	, m_windowInfo({ title,width,height,WS_OVERLAPPEDWINDOW })
 {
 }
@@ -33,7 +55,7 @@ MMMEngine::Utility::App::App(HINSTANCE hInstance, LPCWSTR title, LONG width, LON
 	: m_hInstance(hInstance)
 	, m_hWnd(NULL)
 	, m_isRunning(false)
-	, m_windowInfoDirty(false)
+	, m_windowSizeDirty(false)
 	, m_windowInfo({ title,width,height,WS_OVERLAPPEDWINDOW })
 {
 }
@@ -56,10 +78,10 @@ int MMMEngine::Utility::App::Run()
 	MSG msg = {};
 	while (m_isRunning && msg.message != WM_QUIT)
 	{
-		if (m_windowInfoDirty)
+		if (m_windowSizeDirty)
 		{
-			OnWindowInfoChanged(this, m_windowInfo.width, m_windowInfo.height);
-			m_windowInfoDirty = false;
+			OnWindowSizeChanged(this, m_windowInfo.width, m_windowInfo.height);
+			m_windowSizeDirty = false;
 		}
 
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -97,6 +119,34 @@ HWND MMMEngine::Utility::App::GetWindowHandle() const
 	return m_hWnd;
 }
 
+void MMMEngine::Utility::App::SetWindowSize(int width, int height)
+{
+	if (!m_hWnd)
+	{
+		return;
+	}
+
+	RECT windowRect = { 0, 0, width, height };
+
+	BOOL success = ::AdjustWindowRect(&windowRect, m_windowInfo.style, FALSE);
+
+	if (success)
+	{
+		LONG adjustedWidth = windowRect.right - windowRect.left;
+		LONG adjustedHeight = windowRect.bottom - windowRect.top;
+
+		::SetWindowPos(
+			m_hWnd,
+			NULL,               // Z-Order 변경 안 함
+			0, 0,               // SWP_NOMOVE 플래그를 사용하므로 X, Y는 무시됨
+			adjustedWidth,      // 계산된 전체 폭
+			adjustedHeight,     // 계산된 전체 높이
+			SWP_NOZORDER | SWP_NOMOVE | SWP_FRAMECHANGED
+		);
+	}
+	
+}
+
 LRESULT MMMEngine::Utility::App::HandleWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	OnBeforeWindowMessage(this, hWnd, uMsg, wParam, lParam);
@@ -123,13 +173,18 @@ LRESULT MMMEngine::Utility::App::HandleWindowMessage(HWND hWnd, UINT uMsg, WPARA
 			if (newWidth != m_windowInfo.width || newHeight != m_windowInfo.height) {
 				m_windowInfo.width = newWidth;
 				m_windowInfo.height = newHeight;
-				m_windowInfoDirty = true;
+				m_windowSizeDirty = true;
 			}
 		}
 		break;
 	default:
 		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 		break;
+	}
+
+	if (result == 0)
+	{
+		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
 	OnAfterWindowMessage(this, hWnd, uMsg, wParam, lParam);
@@ -171,7 +226,7 @@ bool MMMEngine::Utility::App::CreateMainWindow()
 	return true;
 }
 
-void MMMEngine::Utility::App::SetTitle(const std::wstring& title)
+void MMMEngine::Utility::App::SetWindowTitle(const std::wstring& title)
 {
 	m_windowInfo.title = title;
 

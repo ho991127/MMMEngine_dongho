@@ -6,7 +6,9 @@
 #include "App.h"
 
 #include "MMMApplication.h"
+#include "MMMScreen.h"
 #include "MMMTime.h"
+#include "MMMInput.h"
 
 #include "InputManager.h"
 #include "TimeManager.h"
@@ -17,7 +19,8 @@ using namespace MMMEngine::Utility;
 
 void Initialize()
 {
-	InputManager::Get().StartUp(MMMEngine::g_pApp->GetWindowHandle());
+	InputManager::Get().StartUp(g_pApp->GetWindowHandle());
+	g_pApp->OnWindowSizeChanged.AddListener<InputManager, &InputManager::HandleWindowResize>(&InputManager::Get());
 
 	ResourceManager::Get().SetResolver(&Player::g_resolver);
 	ResourceManager::Get().SetBytesProvider(&Player::g_bytes);
@@ -29,7 +32,7 @@ void Update()
 	TimeManager::Get().BeginFrame();
 	TimeManager::Get().ConsumeFixedSteps([&](float fixedDt)
 	{
-		Application::SetTitle(L"fps : " + std::to_wstring(1.0f / Time::GetDeltaTime()));
+		Application::SetWindowTitle(L"fps : " + std::to_wstring(1.0f / Time::GetDeltaTime()));
 
 		//PhysicsManager::Get()->PreSyncPhysicsWorld();
 		//PhysicsManager::Get()->PreApplyTransform();
@@ -37,6 +40,23 @@ void Update()
 		//PhysicsManager::Get()->Simulate(fixedDt);
 		//PhysicsManager::Get()->ApplyTransform();
 	});
+
+
+	if (Input::GetKeyDown(KeyCode::Space))
+	{
+		static bool isBigSize = false;
+
+		isBigSize = !isBigSize;
+
+		if (isBigSize)
+		{
+			Screen::SetResolution(1600, 900);
+;		}
+		else
+		{
+			Screen::SetResolution(1280, 720);
+		}
+	}
 }
 
 void Render()
@@ -64,7 +84,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//	return -3;
 
 	App app{ hInstance,L"MMMPlayer",1280,720 };
-	MMMEngine::g_pApp = &app;
+	g_pApp = &app;
 
 	app.OnInitialize.AddListener<&Initialize>();
 	app.OnUpdate.AddListener<&Update>();

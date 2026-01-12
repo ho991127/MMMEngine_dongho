@@ -627,9 +627,6 @@
     <ClInclude Include="StringHelper.h">
       <Filter>헤더 파일\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>헤더 파일\Core\Scene API</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>헤더 파일\Core\Input API</Filter>
     </ClInclude>
@@ -683,6 +680,9 @@
     </ClInclude>
     <ClInclude Include="ResourceFormat.h">
       <Filter>헤더 파일\Core\Resource API\Implement\Format</Filter>
+    </ClInclude>
+    <ClInclude Include="MMMScreen.h">
+      <Filter>헤더 파일\Core\Screen API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

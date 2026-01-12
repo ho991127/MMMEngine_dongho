@@ -22,9 +22,6 @@ namespace MMMEngine
 
         RECT m_clientRect;
 
-        std::unordered_map<KeyCode, int> m_keyCodeMap; // KeyCode와 Windows VKey 매핑
-        void InitKeyCodeMap(); // KeyCode를 Windows VKey로 매핑
-
         //// 게임패드 관리 (최대 4개)
         //std::array<XInputGamepadDevice*, 4> m_gamepads;
         //void InitGamepads(); // 게임패드 초기화
@@ -33,11 +30,12 @@ namespace MMMEngine
         InputManager() = default;
         ~InputManager() = default;
 
+        void HandleWindowResize(int newWidth, int newHeight);
+
         Vector2 GetMousePos();
         bool GetKey(KeyCode keyCode);
         bool GetKeyDown(KeyCode keyCode);
         bool GetKeyUp(KeyCode keyCode);
-        int GetNativeKeyCode(KeyCode keyCode) const;
 
         void StartUp(HANDLE windowHandle);
         void ShutDown();

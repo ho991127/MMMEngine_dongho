@@ -38,18 +38,20 @@ namespace MMMEngine::Utility
 		int Run();
 		void Quit();
 
-		void SetTitle(const std::wstring& title);
+		void SetWindowTitle(const std::wstring& title);
 
 		Event<App, void(void)> OnInitialize{ this };
 		Event<App, void(void)> OnRelease{ this };
 		Event<App, void(void)> OnUpdate{ this };
 		Event<App, void(void)> OnRender{ this };
-		Event<App, void(int,int)> OnWindowInfoChanged{ this };
+		Event<App, void(int,int)> OnWindowSizeChanged{ this };
 		Event<App, void(HWND, UINT, WPARAM, LPARAM)> OnBeforeWindowMessage{ this };
 		Event<App, void(HWND, UINT, WPARAM, LPARAM)> OnAfterWindowMessage{ this };
 
 		const WindowInfo GetWindowInfo() const;
 		HWND GetWindowHandle() const;
+
+		void SetWindowSize(int width, int height);
 	protected:
 		LRESULT HandleWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	private:
@@ -59,7 +61,7 @@ namespace MMMEngine::Utility
 		HINSTANCE m_hInstance;
 		HWND m_hWnd;
 
-		bool m_windowInfoDirty;
+		bool m_windowSizeDirty;
 
 		bool CreateMainWindow();
 		static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

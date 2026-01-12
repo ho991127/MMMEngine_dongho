@@ -1,5 +1,6 @@
 #include "Component.h"
 #include "GameObject.h"
+#include "Transform.h"
 #include "rttr/registration"
 #include "rttr/detail/policies/ctor_policies.h"
 
@@ -9,7 +10,8 @@ RTTR_REGISTRATION
 	using namespace MMMEngine;
 
 	registration::class_<Component>("Component")
-		.property("GameObject", &Component::GetGameObject, &Component::SetGameObject, registration::private_access);
+		.property("GameObject", &Component::GetGameObject, &Component::SetGameObject, registration::private_access)
+		.property_readonly("Transform", &Component::GetTransform);
 
 	//registration::class_<ObjPtr<Component>>("ObjPtr<Component>");
 }
