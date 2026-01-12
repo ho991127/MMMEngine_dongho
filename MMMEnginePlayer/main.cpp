@@ -34,6 +34,8 @@ void Initialize()
 
 	g_pPlayer = Object::NewObject<GameObject>("Player");
 	g_pPlayer->AddComponent<PlayerMove>();
+
+	Object::Destroy(g_pPlayer,5.0f);
 }
 
 void Update()

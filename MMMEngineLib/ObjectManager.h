@@ -153,7 +153,7 @@ namespace MMMEngine
             {
                 // »õ ½½·Ô ÇÒ´ç
                 ptrID = static_cast<uint32_t>(m_objectPtrInfos.size());
-                m_objectPtrInfos.push_back({ newObj,0,0 });
+                m_objectPtrInfos.push_back({ newObj,0,-1.0f,false });
                 ptrGen = 0;
             }
             else
