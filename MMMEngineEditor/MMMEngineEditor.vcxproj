@@ -73,9 +73,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
     <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
+    <IntDir>$(Platform)\$(Configuration)\EngineEditor\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <IntDir>$(Platform)\$(Configuration)\EngineEditor\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -109,7 +111,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineLib\rttr\..;$(SolutionDir)MMMEngineLib\dxtk\Inc;$(SolutionDir)MMMEngineLib\dxtk;$(SolutionDir)MMMEngineLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineShared\rttr\..;$(SolutionDir)MMMEngineShared\dxtk\Inc;$(SolutionDir)MMMEngineShared\dxtk;$(SolutionDir)MMMEngineShared</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <TreatWChar_tAsBuiltInType />
@@ -130,7 +132,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineLib\rttr\..;$(SolutionDir)MMMEngineLib\dxtk\Inc;$(SolutionDir)MMMEngineLib\dxtk;$(SolutionDir)MMMEngineLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineShared\rttr\..;$(SolutionDir)MMMEngineShared\dxtk\Inc;$(SolutionDir)MMMEngineShared\dxtk;$(SolutionDir)MMMEngineShared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,26 +140,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BuildIndexWriter.h" />
     <ClInclude Include="EditorRegistry.h" />
-    <ClInclude Include="EditorResolver.h" />
-    <ClInclude Include="FileBytesProvider.h" />
-    <ClInclude Include="ImporterRegistry.h" />
-    <ClInclude Include="MetaDB.h" />
-    <ClInclude Include="Importer.h" />
-    <ClInclude Include="MetaFile.h" />
-    <ClInclude Include="PakBuilder.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MMMEngineLib\MMMEngineLib.vcxproj">
-      <Project>{454319e7-4ace-4099-8e65-570c30e379a3}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_transform_test.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MMMEngineShared\MMMEngineShared.vcxproj">
+      <Project>{454319e7-4ace-4099-8e65-570c30e379a3}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,46 +13,13 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="헤더 파일\Asset">
-      <UniqueIdentifier>{7baa3963-a2d3-41c3-a90d-5762ed822d0a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Asset\MetaData">
-      <UniqueIdentifier>{95be5abb-972a-4276-b2b0-c599810d6e10}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="헤더 파일\Asset\Cache">
-      <UniqueIdentifier>{915f07a4-4c7d-4e2d-8fb3-97faae01b725}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\EditorRegistry">
+    <Filter Include="헤더 파일\EditorRegistry">
       <UniqueIdentifier>{6d6cef44-2f68-47f5-a714-d401bbbd5fb8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MetaDB.h">
-      <Filter>헤더 파일\Asset\MetaData</Filter>
-    </ClInclude>
-    <ClInclude Include="Importer.h">
-      <Filter>헤더 파일\Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="ImporterRegistry.h">
-      <Filter>헤더 파일\Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="MetaFile.h">
-      <Filter>헤더 파일\Asset\MetaData</Filter>
-    </ClInclude>
-    <ClInclude Include="EditorResolver.h">
-      <Filter>헤더 파일\Asset\Cache</Filter>
-    </ClInclude>
-    <ClInclude Include="FileBytesProvider.h">
-      <Filter>헤더 파일\Asset\Cache</Filter>
-    </ClInclude>
-    <ClInclude Include="PakBuilder.h">
-      <Filter>헤더 파일\Asset\Cache</Filter>
-    </ClInclude>
-    <ClInclude Include="BuildIndexWriter.h">
-      <Filter>헤더 파일\Asset\Cache</Filter>
-    </ClInclude>
     <ClInclude Include="EditorRegistry.h">
-      <Filter>소스 파일\EditorRegistry</Filter>
+      <Filter>헤더 파일\EditorRegistry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

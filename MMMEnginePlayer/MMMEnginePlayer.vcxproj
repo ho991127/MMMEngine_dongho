@@ -73,10 +73,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
+    <IntDir>$(Platform)\$(Configuration)\EnginePlayer\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
+    <IntDir>$(Platform)\$(Configuration)\EnginePlayer\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -110,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineLib\rttr\..;$(SolutionDir)MMMEngineLib\dxtk\Inc;$(SolutionDir)MMMEngineLib\dxtk;$(SolutionDir)MMMEngineLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineShared\rttr\..;$(SolutionDir)MMMEngineShared\dxtk\Inc;$(SolutionDir)MMMEngineShared\dxtk;$(SolutionDir)MMMEngineShared</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -118,6 +120,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -127,7 +132,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineLib\rttr\..;$(SolutionDir)MMMEngineLib\dxtk\Inc;$(SolutionDir)MMMEngineLib\dxtk;$(SolutionDir)MMMEngineLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MMMEngineShared\rttr\..;$(SolutionDir)MMMEngineShared\dxtk\Inc;$(SolutionDir)MMMEngineShared\dxtk;$(SolutionDir)MMMEngineShared</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -140,12 +145,12 @@
     <ClInclude Include="PlayerRegistry.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MMMEngineLib\MMMEngineLib.vcxproj">
-      <Project>{454319e7-4ace-4099-8e65-570c30e379a3}</Project>
-    </ProjectReference>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ProjectReference Include="..\MMMEngineShared\MMMEngineShared.vcxproj">
+      <Project>{454319e7-4ace-4099-8e65-570c30e379a3}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
