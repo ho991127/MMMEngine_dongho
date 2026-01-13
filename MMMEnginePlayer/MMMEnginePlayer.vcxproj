@@ -137,12 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AssetIndexRuntime.h" />
-    <ClInclude Include="PakBytesProvider.h" />
-    <ClInclude Include="PakFileReader.h" />
-    <ClInclude Include="PathMapRuntime.h" />
     <ClInclude Include="PlayerRegistry.h" />
-    <ClInclude Include="PlayerResolver.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MMMEngineLib\MMMEngineLib.vcxproj">
@@ -150,12 +145,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AssetIndexRuntime.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PakBytesProvider.cpp" />
-    <ClCompile Include="PakFileReader.cpp" />
-    <ClCompile Include="PathMapRuntime.cpp" />
-    <ClCompile Include="PlayerResolver.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

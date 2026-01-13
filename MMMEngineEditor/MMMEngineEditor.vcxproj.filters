@@ -13,23 +13,14 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="소스 파일\Asset">
-      <UniqueIdentifier>{957de5cb-e21b-4b19-b285-705cc8d0d333}</UniqueIdentifier>
-    </Filter>
     <Filter Include="헤더 파일\Asset">
       <UniqueIdentifier>{7baa3963-a2d3-41c3-a90d-5762ed822d0a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\Asset\MetaData">
-      <UniqueIdentifier>{cd4faf9c-b018-41db-a0ec-2dedffdb47fa}</UniqueIdentifier>
     </Filter>
     <Filter Include="헤더 파일\Asset\MetaData">
       <UniqueIdentifier>{95be5abb-972a-4276-b2b0-c599810d6e10}</UniqueIdentifier>
     </Filter>
     <Filter Include="헤더 파일\Asset\Cache">
       <UniqueIdentifier>{915f07a4-4c7d-4e2d-8fb3-97faae01b725}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="소스 파일\Asset\Cache">
-      <UniqueIdentifier>{4450ee11-8e28-4874-ba14-497c4d00e7c8}</UniqueIdentifier>
     </Filter>
     <Filter Include="소스 파일\EditorRegistry">
       <UniqueIdentifier>{6d6cef44-2f68-47f5-a714-d401bbbd5fb8}</UniqueIdentifier>
@@ -65,27 +56,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MetaDB.cpp">
-      <Filter>소스 파일\Asset\MetaData</Filter>
-    </ClCompile>
-    <ClCompile Include="FileBytesProvider.cpp">
-      <Filter>소스 파일\Asset\Cache</Filter>
-    </ClCompile>
-    <ClCompile Include="MetaFile.cpp">
-      <Filter>소스 파일\Asset\MetaData</Filter>
-    </ClCompile>
-    <ClCompile Include="ImporterRegistry.cpp">
-      <Filter>소스 파일\Asset</Filter>
-    </ClCompile>
-    <ClCompile Include="BuildIndexWriter.cpp">
-      <Filter>소스 파일\Asset\Cache</Filter>
-    </ClCompile>
-    <ClCompile Include="PakBuilder.cpp">
-      <Filter>소스 파일\Asset\Cache</Filter>
-    </ClCompile>
-    <ClCompile Include="EditorResolver.cpp">
-      <Filter>소스 파일\Asset\Cache</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

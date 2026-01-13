@@ -28,8 +28,6 @@ void Initialize()
 	InputManager::Get().StartUp(g_pApp->GetWindowHandle());
 	g_pApp->OnWindowSizeChanged.AddListener<InputManager, &InputManager::HandleWindowResize>(&InputManager::Get());
 
-	ResourceManager::Get().SetResolver(&Player::g_resolver);
-	ResourceManager::Get().SetBytesProvider(&Player::g_bytes);
 	BehaviourManager::Get().StartUp();
 
 	g_pPlayer = Object::NewObject<GameObject>("Player");
@@ -40,11 +38,14 @@ void Initialize()
 
 void Update()
 {
-	InputManager::Get().Update();
 	TimeManager::Get().BeginFrame();
+	InputManager::Get().Update();
 
 	BehaviourManager::Get().InitializeBehaviours();
+	
+	//씬 변환 후 한번만 호출
 	//BehaviourManager::Get().AllSortBehaviours();
+	//BehaviourManager::Get().AllBroadCastBehaviourMessage("OnSceneLoaded");
 
 	float dt = TimeManager::Get().GetDeltaTime();
 
@@ -62,6 +63,7 @@ void Update()
 	BehaviourManager::Get().BroadCastBehaviourMessage("LateUpdate");
 
 	ObjectManager::Get().UpdateInternalTimer(dt);
+	BehaviourManager::Get().DisableBehaviours();
 	ObjectManager::Get().ProcessPendingDestroy();
 }
 
@@ -73,6 +75,7 @@ void Render()
 void Release()
 {
 	BehaviourManager::Get().ShutDown();
+	g_pApp = nullptr;
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -80,15 +83,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_ LPWSTR    lpCmdLine,
 	_In_ int       nCmdShow)
 {
-	//if (!Player::g_pathMap.LoadFromFile(L"Data/PathMap.bin"))
-	//	return -1;
-
-	//if (!Player::g_assetIndex.LoadFromFile(L"Data/AssetIndex.bin"))
-	//	return -2;
-
-	//if (!Player::g_pak.Open(L"Data/assets.pak"))
-	//	return -3;
-
 	App app{ hInstance,L"MMMPlayer",1280,720 };
 	g_pApp = &app;
 

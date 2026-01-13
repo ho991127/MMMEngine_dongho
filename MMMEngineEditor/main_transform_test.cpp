@@ -15,9 +15,6 @@ using namespace MMMEngine::Utility;
 void Init()
 {
 	InputManager::Get().StartUp(g_pApp->GetWindowHandle());
-
-	ResourceManager::Get().SetResolver(&Editor::g_resolver);
-	ResourceManager::Get().SetBytesProvider(&Editor::g_filesProvider);
 }
 
 #include "Transform.h"

@@ -16,12 +16,7 @@ void Init()
 {
 	InputManager::Get().StartUp(g_pApp->GetWindowHandle());
 	g_pApp->OnWindowSizeChanged.AddListener<InputManager, &InputManager::HandleWindowResize>(&InputManager::Get());
-
-	ResourceManager::Get().SetResolver(&Editor::g_resolver);
-	ResourceManager::Get().SetBytesProvider(&Editor::g_filesProvider);
 }
-
-#include "Transform.h"
 
 void Update()
 {
