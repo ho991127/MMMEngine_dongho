@@ -73,11 +73,11 @@ MMMEngine::Transform::Transform()
 
 }
 
-void MMMEngine::Transform::UnInitialize()
-{
-	DetachChildren();
-	SetParent(nullptr);
-}
+//void MMMEngine::Transform::UnInitialize()
+//{
+//	DetachChildren();
+//	SetParent(nullptr);
+//}
 
 const Matrix& MMMEngine::Transform::GetLocalMatrix() const
 {

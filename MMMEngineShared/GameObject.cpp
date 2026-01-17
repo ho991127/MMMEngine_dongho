@@ -124,8 +124,16 @@ void MMMEngine::GameObject::Dispose()
 		scene->UnRegisterGameObject(SelfPtr(this));
 	}
 
-	ObjPtr<Component> t = m_transform;
-	t->SetGameObject(nullptr);
+	for (auto& child : m_transform->m_childs)
+	{
+		if (child.IsValid() 
+			&& !child->IsDestroyed())
+		{
+			Destroy(child->GetGameObject());
+		}
+	}
+	m_transform->SetParent(nullptr);
+	m_transform->SetGameObject(nullptr);
 	UnRegisterComponent(m_transform);
 	ObjectManager::Get().Destroy(m_transform);
 	m_transform = nullptr;

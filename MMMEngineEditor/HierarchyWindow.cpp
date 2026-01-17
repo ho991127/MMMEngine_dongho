@@ -2,6 +2,9 @@
 #include "SceneManager.h"
 #include "Transform.h"
 
+#include "EditorRegistry.h"
+using namespace MMMEngine::EditorRegistry;
+
 #include <optional>
 
 using namespace MMMEngine;
@@ -85,15 +88,35 @@ void DrawHierarchyMember(ObjPtr<GameObject> obj)
 
 void MMMEngine::Editor::HierarchyWindow::Render()
 {
+	if (!g_editor_hierarchy_window)
+		return;
+
+	ImGuiWindowClass wc;
+	// 핵심: 메인 뷰포트에 이 윈도우를 종속시킵니다.
+	// 이렇게 하면 메인 창을 클릭해도 이 창이 '메인 창의 일부'로서 취급되어 우선순위를 가집니다.
+	wc.ParentViewportId = ImGui::GetMainViewport()->ID;
+	wc.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoFocusOnAppearing; // 필요 시 설정
+
+	ImGui::SetNextWindowClass(&wc);
+
   	auto sceneRef = SceneManager::Get().GetCurrentScene();
 	auto sceneRaw = SceneManager::Get().GetSceneRaw(sceneRef);
+	
 
-	ImGui::Begin(u8"하이어라키");
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowMenuButtonPosition = ImGuiDir_None;
 
-	if (ImGui::Button(u8"오브젝트 생성"))
-	{
-		Object::NewObject<GameObject>();
-	}
+	ImGui::Begin(u8"하이어라키", &g_editor_hierarchy_window);
+
+	auto hbuttonsize = ImVec2{ ImGui::GetContentRegionAvail().x / 2 - ImGui::GetStyle().ItemSpacing.x / 2, 0 };
+
+	if (ImGui::Button(u8"생성", hbuttonsize)) Object::NewObject<GameObject>();
+	ImGui::SameLine();
+	ImGui::BeginDisabled(g_selectedGameObject == nullptr);
+	if (ImGui::Button(u8"파괴", hbuttonsize)) { Object::Destroy(g_selectedGameObject); g_selectedGameObject = nullptr; }
+	ImGui::EndDisabled();
+
+	ImGui::Separator();
 
 	const auto& gameObjects = SceneManager::Get().GetAllGameObjectInCurrentScene();
 

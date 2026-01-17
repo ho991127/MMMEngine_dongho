@@ -8,6 +8,10 @@
 #include "SceneManager.h"
 #include "SceneSerializer.h"
 
+#include "EditorRegistry.h"
+
+using namespace MMMEngine::EditorRegistry;
+
 #include "HierarchyWindow.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -132,7 +136,8 @@ bool MMMEngine::Editor::ImGuiEditorContext::Initialize(HWND hWnd, ID3D11Device* 
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // 키보드 내비게이션 활성화
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     m_defaultFont = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/malgun.ttf", 16.0f, NULL, io.Fonts->GetGlyphRangesKorean()); // 한글 폰트 설정
     m_bigFont = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/malgun.ttf", 36.0f, NULL, io.Fonts->GetGlyphRangesKorean());
 
@@ -145,6 +150,12 @@ bool MMMEngine::Editor::ImGuiEditorContext::Initialize(HWND hWnd, ID3D11Device* 
     style.WindowRounding = 10.0f;
     style.GrabRounding = 6.0f;
     style.ScrollbarRounding = 6.0f;
+
+    //if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    //{
+    //    style.WindowRounding = 0.0f;
+    //    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    //}
 
     // 색상 설정
     //style.Colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 0.90f);
@@ -220,7 +231,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
     {
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_NoCloseButton);
     }
 
     // 6. 메뉴바 구현
@@ -235,6 +246,11 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                 SceneSerializer::Get().ExtractScenes({ SceneManager::Get().GetSceneRaw(sceneRef) },L"Assets/Scenes");
                 p_open = false;
             }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu(u8"창"))
+        {
+            ImGui::MenuItem(u8"하이어라키", nullptr, &g_editor_hierarchy_window);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -257,6 +273,13 @@ void MMMEngine::Editor::ImGuiEditorContext::EndFrame()
 {
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }
 
 void MMMEngine::Editor::ImGuiEditorContext::Uninitialize()
