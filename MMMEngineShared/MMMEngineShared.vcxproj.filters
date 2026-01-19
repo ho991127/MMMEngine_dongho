@@ -908,6 +908,9 @@
     <ClCompile Include="Renderer.cpp">
       <Filter>소스 파일\Core\Render API</Filter>
     </ClCompile>
+    <ClCompile Include="rttr_directxmath_registry.cpp">
+      <Filter>소스 파일\Utility\RTTRRegistry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="rttr\registration">

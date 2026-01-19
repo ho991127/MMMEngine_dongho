@@ -174,24 +174,68 @@ namespace MMMEngine::Editor
         }
         if (hasCpp) return;
 
-        fs::path file = scriptsDir / "ExampleBehaviour.cpp";
+        fs::path file = scriptsDir / "ExampleBehaviour.h";
         std::ofstream out(file, std::ios::binary);
         if (!out) return;
 
         // NOTE: ScriptBehaviour.h include는 vcxproj의 AdditionalIncludeDirectories에 의해 해결된다고 가정
         out <<
             R"(#include "ScriptBehaviour.h"
+#include "Export.h"
 
-using namespace MMMEngine;
-
-class ExampleBehaviour : public ScriptBehaviour
+namespace MMMEngine
 {
-public:
-    void OnStart() override {}
-    void OnUpdate(float dt) override {}
-};
+    class MMMENGINE_API ExampleBehaviour : public ScriptBehaviour
+    {
+    public:
+        ExampleBehaviour()
+        {
+            REGISTER_BEHAVIOUR_MESSAGE(Start)
+            REGISTER_BEHAVIOUR_MESSAGE(Update)
+        }
 
-// TODO: 엔진의 등록 방식(Export table / 매크로 등)에 맞게 연결
+        void Start();
+
+        void Update();
+    };
+}
+)";
+
+        fs::path file = scriptsDir / "ExampleBehaviour.cpp";
+        std::ofstream out2(file, std::ios::binary);
+        if (!out2) return;
+
+        // NOTE: ScriptBehaviour.h include는 vcxproj의 AdditionalIncludeDirectories에 의해 해결된다고 가정
+        out2 <<
+            R"(#include "Export.h"
+#include "ScriptBehaviour.h"
+#include "ExampleBehaviour.h"
+#include "rttr/registration"
+#include "rttr/detail/policies/ctor_policies.h"
+
+RTTR_REGISTRATION
+{
+	using namespace rttr;
+	using namespace MMMEngine;
+
+	registration::class_<ExampleBehaviour>("ExampleBehaviour");
+
+	registration::class_<ObjPtr<ExampleBehaviour>>("ObjPtr<ExampleBehaviour>")
+		.constructor(
+			[]() {
+				return Object::NewObject<ExampleBehaviour>();
+			});
+
+	type::register_wrapper_converter_for_base_classes<MMMEngine::ObjPtr<ExampleBehaviour>>();
+}
+
+void MMMEngine::ExampleBehaviour::Start()
+{
+}
+
+void MMMEngine::ExampleBehaviour::Update()
+{
+}
 )";
     }
 
