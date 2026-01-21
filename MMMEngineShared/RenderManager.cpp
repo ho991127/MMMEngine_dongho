@@ -183,6 +183,17 @@ namespace MMMEngine {
 
 		bd.ByteWidth = sizeof(Render_CamBuffer);
 		HR_T(m_pDevice->CreateBuffer(&bd, nullptr, m_pCambuffer.GetAddressOf()));
+
+		// 텍스쳐 버퍼번호 하드코딩
+		m_propertyMap[L"basecolor"] = 0;
+		m_propertyMap[L"normal"] = 1;
+		m_propertyMap[L"emissive"] = 2;
+		m_propertyMap[L"shadowmap"] = 3;
+		m_propertyMap[L"opacity"] = 4;
+
+		m_propertyMap[L"metalic"] = 30;
+		m_propertyMap[L"roughness"] = 31;
+		m_propertyMap[L"ao"] = 32;
 	}
 
 	void RenderManager::BeginFrame()
@@ -194,6 +205,14 @@ namespace MMMEngine {
 
 	void RenderManager::Render()
 	{
+		// Init Queue 처리
+		while (!m_initQueue.empty()) {
+			auto& renderer = m_initQueue.front();
+			m_initQueue.pop();
+
+			renderer->Initialize();
+		}
+
 		// Clear
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView.Get(), m_backColor);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -229,5 +248,14 @@ namespace MMMEngine {
 	{
 		// Present our back buffer to our front buffer
 		m_pSwapChain->Present(0, 0);
+	}
+
+	const int RenderManager::PropertyToIdx(const std::wstring& _propertyName) const
+	{
+		auto it = m_propertyMap.find(_propertyName);
+		if (it == m_propertyMap.end())
+			return -1;
+
+		return it->second;
 	}
 }

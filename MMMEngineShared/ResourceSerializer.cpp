@@ -16,7 +16,7 @@ using namespace MMMEngine;
 using namespace rttr;
 
 
-json SerializeVariant(const rttr::variant& var) {
+json SerializeMeshVariant(const rttr::variant& var) {
 	type t = var.get_type();
 
 	if (t.is_arithmetic()) {
@@ -40,7 +40,7 @@ json SerializeVariant(const rttr::variant& var) {
 		auto view = var.create_sequential_view();
 		for (const auto& item : view)
 		{
-			arr.push_back(SerializeVariant(item));
+			arr.push_back(SerializeMeshVariant(item));
 		}
 		return arr;
 	}
@@ -54,7 +54,7 @@ json SerializeVariant(const rttr::variant& var) {
 		{
 			rttr::variant value = prop.get_value(var);
 			if (value.is_valid())
-				obj[prop.get_name().to_string()] = SerializeVariant(value);
+				obj[prop.get_name().to_string()] = SerializeMeshVariant(value);
 		}
 		return obj;
 	}
@@ -84,7 +84,7 @@ json SerializeVertex(const std::vector<Mesh_Vertex>& _vertices)
 				continue;
 
 			rttr::variant var = prop.get_value(vertex);
-			vertJson[prop.get_name().to_string()] = SerializeVariant(var);
+			vertJson[prop.get_name().to_string()] = SerializeMeshVariant(var);
 		}
 		meshJson["SubMesh"].push_back(vertJson);
 	}

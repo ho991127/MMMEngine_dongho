@@ -14,6 +14,7 @@
 
 #include <RenderShared.h>
 #include <Object.h>
+#include "json/json.hpp"
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "dxgi.lib")
@@ -33,6 +34,7 @@ namespace MMMEngine
 	private:
 		RenderManager() = default;
 		std::map<int, std::vector<std::shared_ptr<RendererBase>>> m_Passes;
+		std::queue<std::shared_ptr<RendererBase>> m_initQueue;
 
 	protected:
 		HWND* m_pHwnd = nullptr;	// HWND 포인터
@@ -73,6 +75,9 @@ namespace MMMEngine
 		// 백버퍼 텍스쳐
 		Microsoft::WRL::ComPtr<ID3D11Texture2D1> m_pBackBuffer = nullptr;		// 백버퍼 텍스처
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView1> m_pBackSRV = nullptr;	// 백버퍼 SRV
+
+		// 텍스쳐 버퍼인덱스 주는 맵 <propertyName, index>
+		std::unordered_map<std::wstring, int> m_propertyMap;
 	public:
 		void Initialize(HWND* _hwnd, UINT _ClientWidth, UINT _ClientHeight);
 		void InitD3D();
@@ -84,11 +89,16 @@ namespace MMMEngine
 		void EndFrame();
 
 		const Microsoft::WRL::ComPtr<ID3D11Device5> GetDevice() const { return m_pDevice; }
+		const std::shared_ptr<VShader> GetDefaultVS() const { return m_pDefaultVSShader; }
+		const std::shared_ptr<PShader> GetDefaultPS() const { return m_pDefaultPSShader; }
+		const Microsoft::WRL::ComPtr<ID3D11InputLayout> GetDefaultInputLayout() const { return m_pDefaultInputLayout; }
+		const int PropertyToIdx(const std::wstring& _propertyName) const;
 	public:
 		template <typename T, typename... Args>
 		std::weak_ptr<RendererBase> AddRenderer(RenderType _passType, Args&&... args) {
 			std::shared_ptr<T> temp = std::make_shared<T>(std::forward<Args>(args)...);
 			m_Passes[_passType].push_back(temp);
+			m_initQueue.push(temp);
 
 			return temp;
 		}

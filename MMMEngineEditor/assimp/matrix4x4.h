@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assimp/vector3.h>
 #include <assimp/defs.h>
-#include <assimp/config.h>
 
 #ifdef __cplusplus
 

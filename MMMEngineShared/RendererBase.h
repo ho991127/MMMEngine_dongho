@@ -6,7 +6,6 @@
 #include "Export.h"
 #include <d3d11_4.h>
 #include <Material.h>
-#include "Object.h"
 #include "ResourceManager.h"
 
 namespace MMMEngine {
@@ -20,7 +19,6 @@ namespace MMMEngine {
 		ResPtr<Material> m_pMaterial;
 
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext4> m_pDeviceContext;	// 디바이스 컨텍스트 참조
-		ObjPtr<MeshRenderer> m_pMeshRenderer;							// 주관 메시렌더러
 		DirectX::SimpleMath::Matrix m_worldMat = DirectX::SimpleMath::Matrix::Identity;
 
 	public:
@@ -35,6 +33,7 @@ namespace MMMEngine {
 			std::shared_ptr<Material>& _material
 		);
 
+		virtual void Initialize() = 0;
 		virtual void Render() = 0;
 	};
 }

@@ -3,6 +3,7 @@ Texture2D _albedo : register(t0);
 Texture2D _normal: register(t1);
 Texture2D _emissive : register(t2);
 Texture2D _shadowmap : register(t3);
+Texture2D _opacity : register(t4);
 
 SamplerState _sp0 : register(s0);
 

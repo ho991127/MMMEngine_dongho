@@ -16,7 +16,7 @@ bool MMMEngine::PShader::LoadFromFilePath(const std::wstring& filePath)
 		m_pBlob->GetBufferPointer(),
 		m_pBlob->GetBufferSize(),
 		nullptr,
-		m_pPSShader.GetAddressOf()));
+		m_pPShader.GetAddressOf()));
 
 	// PS쉐이더 컴파일
 	Microsoft::WRL::ComPtr<ID3D10Blob> errorBlob;

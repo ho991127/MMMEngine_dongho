@@ -16,6 +16,4 @@ void MMMEngine::RendererBase::SetRenderData(Microsoft::WRL::ComPtr<ID3D11Buffer>
 	m_pIndexBuffer = _index;
 	m_IndicesSize = _indicesSize;
 	m_pMaterial = _material;
-
-
 }
