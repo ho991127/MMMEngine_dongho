@@ -113,7 +113,7 @@ namespace MMMEngine {
 			ModelType type = ModelType::Static;
 		};
 
-		// 모델 등록하기 (id, 경로, 타입)
+		// 모델 등록하기 (경로, 타입)
 		void RegisterModel(const std::wstring path, ModelType type);
 
 		// 모델 불러오기 (id)

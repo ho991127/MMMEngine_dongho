@@ -5,8 +5,8 @@
 #include "rttr/type"
 
 #include <fstream>
-#include <filesystem>
 #include "StringHelper.h"
+#include "MaterialSerializer.h"
 
 DEFINE_SINGLETON(MMMEngine::ResourceSerializer);
 
@@ -102,7 +102,7 @@ json SerializeMesh(const MeshData& _meshData)
 	return submeshJson;
 }
 
-void MMMEngine::ResourceSerializer::Serialize_StaticMesh(const StaticMesh* _in, std::wstring _path)
+fs::path MMMEngine::ResourceSerializer::Serialize_StaticMesh(const StaticMesh* _in, std::wstring _path, std::wstring _name)
 {
 	json snapshot;
 
@@ -115,8 +115,12 @@ void MMMEngine::ResourceSerializer::Serialize_StaticMesh(const StaticMesh* _in, 
 	snapshot["Mesh"] = meshJson;
 
 	json matJson = json::array();
+	int index = 0;
 	for (auto& matPtr : _in->materials) {
-		matJson.push_back(matPtr->GetFilePath());
+		fs::path matPath = MaterialSerializer::Get().Serealize(matPtr.get(), _path, _name, index);
+		++index;
+
+		matJson.push_back(matPath.u8string());
 	}
 	snapshot["Materials"] = matJson;
 
@@ -124,17 +128,20 @@ void MMMEngine::ResourceSerializer::Serialize_StaticMesh(const StaticMesh* _in, 
 	std::vector<uint8_t> v = json::to_msgpack(snapshot);
 
 	fs::path p(_path);
+	p = p / (_name.append(L"_StaticMesh"));
+
 	if (p.has_parent_path() && !fs::exists(p.parent_path())) {
 		fs::create_directories(p.parent_path());
 	}
 
-	std::ofstream file(_path, std::ios::binary);
+	std::ofstream file(p.wstring(), std::ios::binary);
 	if (!file.is_open()) {
 		throw std::runtime_error("파일을 열 수 없습니다: " + Utility::StringHelper::WStringToString(_path));
 	}
 
 	file.write(reinterpret_cast<const char*>(v.data()), v.size());
 	file.close();
+	return p;
 }
 
 void MMMEngine::ResourceSerializer::DeSerialize_StaticMesh(StaticMesh* _out, std::wstring _path)

@@ -1,7 +1,6 @@
 #include "MaterialSerializer.h"
 #include <rttr/type>
 #include <fstream>
-#include <filesystem>
 
 #include "VShader.h"
 #include "PShader.h"
@@ -69,7 +68,7 @@ void MMMEngine::MaterialSerializer::to_json(json& j, const MMMEngine::PropertyVa
 }
 
 
-void MMMEngine::MaterialSerializer::Serealize(Material* _material, std::wstring _path)
+fs::path MMMEngine::MaterialSerializer::Serealize(Material* _material, std::wstring _path, std::wstring _name, int _index)
 {
 	json snapshot;
 	auto matMUID = _material->GetMUID().IsEmpty() ? Utility::MUID::NewMUID() : _material->GetMUID();
@@ -88,7 +87,9 @@ void MMMEngine::MaterialSerializer::Serealize(Material* _material, std::wstring 
 	
 	std::vector<uint8_t> v = json::to_msgpack(snapshot);
 
-	fs::path p(_path);
+	fs::path p(_path + _name + L"_Material");
+	p = p / (_name + L"_Material" + std::to_wstring(_index));
+
 	if (p.has_parent_path() && !fs::exists(p.parent_path())) {
 		fs::create_directories(p.parent_path());
 	}
@@ -100,6 +101,7 @@ void MMMEngine::MaterialSerializer::Serealize(Material* _material, std::wstring 
 
 	file.write(reinterpret_cast<const char*>(v.data()), v.size());
 	file.close();
+	return p;
 }
 
 void MMMEngine::MaterialSerializer::UnSerealize(Material* _material, std::wstring _path)

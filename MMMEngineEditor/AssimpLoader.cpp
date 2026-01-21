@@ -11,7 +11,9 @@
 #include "MaterialSerializer.h"
 #include <RendererTools.h>
 #include "RenderManager.h"
-#include "ModelSerealizer.h"
+#include "ResourceSerializer.h"
+
+namespace fs = std::filesystem;
 
 RTTR_REGISTRATION
 {
@@ -19,7 +21,8 @@ RTTR_REGISTRATION
 	using namespace MMMEngine;
 
 	rttr::registration::class_<AssimpLoader>("AssimpLoader")
-		.property("exportpath", &AssimpLoader::m_exportPath);
+		.property("exportPath", &AssimpLoader::m_exportPath)
+		.method("registerModel", &AssimpLoader::RegisterModel);
 }
 
 const aiScene* MMMEngine::AssimpLoader::ImportScene(const std::wstring path, ModelType type)
@@ -694,15 +697,23 @@ void MMMEngine::AssimpLoader::RegisterModel(const std::wstring path, ModelType t
 	ResPtr<StaticMesh> staticMesh;
 	ResPtr<SkeletalMesh> skeletalMesh;
 
+	fs::path fPath(path);
+	std::wstring filename;
+
+	if (fPath.has_stem()) {
+		filename = fPath.stem().wstring();
+	}
+
 	switch (type)
 	{
 	case MMMEngine::AssimpLoader::ModelType::Static:
 		staticMesh = ConvertStaticMesh(&model);
-		ModelSerealizer::Get().Static_Serealize(staticMesh.get(), m_exportPath);
+		ResourceSerializer::Get().Serialize_StaticMesh(staticMesh.get(), m_exportPath, filename);
 		break;
 	case MMMEngine::AssimpLoader::ModelType::Animated:
 		skeletalMesh = ConvertSkeletalMesh(&model);
-		ModelSerealizer::Get().Skeletal_Serealize(skeletalMesh.get(), m_exportPath);
+		//TODO::Skeletalmesh Á÷·ÄÈ­
+		//ResourceSerializer::Get().Serialize_StaticMesh(skeletalMesh.get(), m_exportPath);
 		break;
 	default:
 		return;
