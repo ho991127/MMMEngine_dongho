@@ -14,11 +14,13 @@
 #include "SceneManager.h"
 #include "ObjectManager.h"
 #include "ProjectManager.h"
+#include "PhysxManager.h"
 
 #include "StringHelper.h"
 #include "ImGuiEditorContext.h"
 #include "BuildManager.h"
 #include "DLLHotLoadHelper.h"
+#include "PhysX.h"
 
 namespace fs = std::filesystem;
 using namespace MMMEngine;
@@ -70,6 +72,11 @@ void Initialize()
 
 	ImGuiEditorContext::Get().Initialize(hwnd, device.Get(), context.Get());
 	app->OnBeforeWindowMessage.AddListener<ImGuiEditorContext, &ImGuiEditorContext::HandleWindowMessage>(&ImGuiEditorContext::Get());
+
+	MMMEngine::PhysicX::Get().Initialize();
+	SceneManager::Get().onSceneInitBefore.AddListenerLambda([]() { 
+		MMMEngine::PhysxManager::Get().BindScene(SceneManager::Get().GetCurrentSceneRaw());
+		});
 }
 
 void Update_ProjectNotLoaded()
@@ -138,14 +145,15 @@ void Update()
 
 	TimeManager::Get().ConsumeFixedSteps([&](float fixedDt)
 		{
-			if (!EditorRegistry::g_editor_scene_playing)
-				return;
+			/*if (!EditorRegistry::g_editor_scene_playing)
+				return;*/
 
+			MMMEngine::PhysxManager::Get().StepFixed(fixedDt);
 			//PhysicsManager::Get()->PreSyncPhysicsWorld();
 			//PhysicsManager::Get()->PreApplyTransform();
-			BehaviourManager::Get().BroadCastBehaviourMessage("FixedUpdate");
 			//PhysicsManager::Get()->Simulate(fixedDt);
 			//PhysicsManager::Get()->ApplyTransform();
+			BehaviourManager::Get().BroadCastBehaviourMessage("FixedUpdate");
 		});
 
 	RenderManager::Get().BeginFrame();
@@ -162,6 +170,7 @@ void Update()
 
 void Release()
 {
+	PhysxManager::Get().UnbindScene();
 	GlobalRegistry::g_pApp = nullptr;
 	ImGuiEditorContext::Get().Uninitialize();
 	RenderManager::Get().ShutDown();
