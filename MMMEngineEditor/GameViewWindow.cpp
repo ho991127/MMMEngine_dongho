@@ -20,9 +20,11 @@ void MMMEngine::Editor::GameViewWindow::Render()
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowMenuButtonPosition = ImGuiDir_None;
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     if (!ImGui::Begin(u8"\uf11b ∞‘¿”", &g_editor_window_gameView))
     {
         ImGui::End();
+        ImGui::PopStyleVar();
         return;
     }
 
@@ -68,4 +70,5 @@ void MMMEngine::Editor::GameViewWindow::Render()
     }
 
     ImGui::End();
+    ImGui::PopStyleVar();
 }
