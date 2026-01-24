@@ -1,12 +1,13 @@
 #include "imgui.h"
 #include "SceneViewWindow.h"
 #include "EditorRegistry.h"
+#include "RenderStateGuard.h"
+#include "RenderManager.h"
 
 using namespace MMMEngine::Editor;
 using namespace MMMEngine;
+using namespace MMMEngine::Utility;
 using namespace MMMEngine::EditorRegistry;
-
-
 
 void MMMEngine::Editor::SceneViewWindow::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, int initWidth, int initHeight)
 {
@@ -204,25 +205,19 @@ void MMMEngine::Editor::SceneViewWindow::ResizeRenderTarget(ID3D11Device* device
 		CreateRenderTargets(device, width, height);
 	}
 }
-
 void MMMEngine::Editor::SceneViewWindow::RenderSceneToTexture(ID3D11DeviceContext* context)
 {
 	ID3D11ShaderResourceView* nullSRV = nullptr;
 	context->PSSetShaderResources(0, 1, &nullSRV);
 
-	// Render Target과 Depth Stencil 설정
-	ID3D11RenderTargetView* oldRTV = nullptr;
-	ID3D11DepthStencilView* oldDSV = nullptr;
-	context->OMGetRenderTargets(1, &oldRTV, &oldDSV);
-	UINT numViewports = 1;
-	D3D11_VIEWPORT oldViewport;
-	context->RSGetViewports(&numViewports, &oldViewport);
+	RenderStateGuard guard(context); // 백업/복원만 담당
 
-	context->OMSetRenderTargets(1, m_pSceneRTV.GetAddressOf(), m_pSceneDSV.Get());
+	ID3D11RenderTargetView* rtv = m_pSceneRTV.Get();
+	ID3D11DepthStencilView* dsv = m_pSceneDSV.Get();
+	context->OMSetRenderTargets(1, &rtv, dsv);
 
-
-	// Viewport 설정
-	D3D11_VIEWPORT viewport = {};
+	// Viewport
+	D3D11_VIEWPORT viewport{};
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
 	viewport.Width = static_cast<float>(m_width);
@@ -231,27 +226,22 @@ void MMMEngine::Editor::SceneViewWindow::RenderSceneToTexture(ID3D11DeviceContex
 	viewport.MaxDepth = 1.0f;
 	context->RSSetViewports(1, &viewport);
 
-	// Clear
+	// Clear (RTV/DSV가 바인딩된 뒤에 하는 게 안전)
 	float clearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	context->ClearRenderTargetView(m_pSceneRTV.Get(), clearColor);
-	context->ClearDepthStencilView(m_pSceneDSV.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context->ClearRenderTargetView(rtv, clearColor);
+	context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// 카메라 입력 업데이트 (윈도우가 focused일 때만)
 	if (m_isFocused)
-	{
 		m_pCam->InputUpdate();
-	}
 
-	// 그리드 렌더링
 	m_pGridRenderer->Render(context, *m_pCam);
 
-	// TODO: 여기에 다른 씬 오브젝트들 렌더링
+	auto view = m_pCam->GetViewMatrix();
+	auto proj = m_pCam->GetProjMatrix();
 
-	// 3. 원래 상태로 복구
-	context->OMSetRenderTargets(1, &oldRTV, oldDSV);
-	context->RSSetViewports(1, &oldViewport);
+	RenderManager::Get().SetViewMatrix(view);
+	RenderManager::Get().SetProjMatrix(proj);
+	RenderManager::Get().RenderOnlyRenderer();
 
-	// 4. OMGet으로 올라간 참조 카운트 해제 (메모리 누수 방지)
-	if (oldRTV) oldRTV->Release();
-	if (oldDSV) oldDSV->Release();
+	// 여기서 함수 끝나면 guard 소멸자에서 원래 RT/Viewport/Blend 등 자동 복원됨
 }
