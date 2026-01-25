@@ -28,7 +28,7 @@ public:
 
 
 
-```
+```c++
 onMatrixUpdate.AddListener<Listener, &Listener::OnMatrixUpdated>(&li);
 ```
 
