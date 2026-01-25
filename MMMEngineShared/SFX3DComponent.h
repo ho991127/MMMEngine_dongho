@@ -1,18 +1,19 @@
 #pragma once
 #include "AudioManager.h"
 #include "Export.h"
-#include "ScriptBehaviour.h"
+#include "Behaviour.h"
 //#include "Component.h"
 #include "Transform.h"
 
 namespace MMMEngine {
-	class MMMENGINE_API SFX3DComponent : public ScriptBehaviour
+	class MMMENGINE_API SFX3DComponent : public Behaviour
 	{
 	private:
-		RTTR_ENABLE(ScriptBehaviour)
+		RTTR_ENABLE(Behaviour)
 		RTTR_REGISTRATION_FRIEND
 		friend class ObjectManager;
 		friend class GameObject;
+		friend class BehaviourManager;
 		FMOD::Channel* sfxChannel[5] = {};
 		FMOD::Channel* loopsfxChannel[3] = {};
 		int mNextSlot = 0;

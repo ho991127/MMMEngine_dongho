@@ -36,8 +36,7 @@ void MMMEngine::Player::Initialize()
 	tr = GetTransform();
 	targetEnemy = nullptr;
 	matchedSnowball = nullptr;
-	auto fwd = tr->GetWorldMatrix().Forward(); // 보통 월드 기준 forward
-	// fwd = (x, y, z)
+	auto fwd = tr->GetWorldMatrix().Forward();
 
 	// +Z가 전방인 LH 기준 yaw 계산
 	yawRad = atan2f(fwd.x, fwd.z);
@@ -58,6 +57,7 @@ void MMMEngine::Player::Update()
 	pos = tr->GetWorldPosition();
 	rot = tr->GetWorldRotation();
 	HandleMovement();
+	AutoHeal();
 	UpdateScoop();
 	if (matchedSnowball)
 	{
@@ -183,4 +183,47 @@ void MMMEngine::Player::UpdateScoop()
 		SnowballManager::instance->OnScoopEnd(*this);
 		scoopHeld = false;
 	}
+}
+
+void MMMEngine::Player::AutoHeal()
+{
+	if (damageTimer > 0.0f)
+	{
+		damageTimer -= Time::GetDeltaTime();
+	}
+	if (prevHP > HP)
+	{
+		fighting = true;
+		nonfightTimer = 0.0f;
+	}
+	prevHP = HP;
+	if (fighting)
+	{
+		nonfightTimer += Time::GetDeltaTime();
+		if (nonfightTimer >= nonfightDelay)
+		{
+			fighting = false;
+			healTimer = 0.0f;
+		}
+	}
+	else if (HP < maxHP)
+	{
+		healTimer += Time::GetDeltaTime();
+		if (healTimer >= healDelay)
+		{
+			HP = std::min(HP + healHP, maxHP);
+			healTimer = 0.0f;
+		}
+	}
+}
+
+void MMMEngine::Player::GetDamage(int t)
+{
+	if (damageTimer > 0.0f)
+		return; // 무적 시간 중이면 데미지 무시
+
+	HP -= t;
+	HP = std::max(HP, 0);
+
+	damageTimer = damageDelay; // 무적 타이머 시작
 }

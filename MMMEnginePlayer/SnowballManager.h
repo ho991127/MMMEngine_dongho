@@ -24,6 +24,7 @@ namespace MMMEngine {
 		void RemoveFromList(ObjPtr<GameObject> obj);
 		void AssembleSnow();
 		void SnowToCastle();
+		void SnowToBuilding();
 		struct ScoopState
 		{
 			bool active = false;

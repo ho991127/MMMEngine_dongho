@@ -1,6 +1,7 @@
 #include "Enemy.h"
 #include "Player.h"
 #include "Castle.h"
+#include "Building.h"
 #include "MMMTime.h"
 #include "Transform.h"
 
@@ -19,6 +20,7 @@ void MMMEngine::Enemy::Initialize()
 		castlecomp = castle->GetComponent<Castle>();
 		castletr = castle->GetTransform();
 	}
+	Configure();
 }
 
 void MMMEngine::Enemy::UnInitialize()

@@ -12,7 +12,7 @@ namespace MMMEngine {
 		void Initialize() override;
 		void UnInitialize() override;
 		void Update();
-		void GetDamage(int t) { HP -= t; };
+		void GetDamage(int t) { HP - t; HP = std::max(HP, 0); };
 		void PlayerHitMe();
 	private:
 		bool MoveToTarget(const DirectX::SimpleMath::Vector3 target, float stopDist);
@@ -25,10 +25,10 @@ namespace MMMEngine {
 		bool playerFind = false;
 		float playerLostdist = 50.0f;
 		float playercheckdist = 10.0f;
-		float velocity = 10.0f;
-		float attackDelay = 1.0f;
+		float velocity = 13.0f;
+		float attackDelay = 0.65f;
 		float attackTimer = 0.0f;
-		float battledist = 5.0f;
+		float battledist = 1.7f;
 		bool attackCastle = false;
 		ObjPtr<Transform> tr;
 		DirectX::SimpleMath::Vector3 pos;

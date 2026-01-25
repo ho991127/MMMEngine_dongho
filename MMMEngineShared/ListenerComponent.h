@@ -1,18 +1,19 @@
 #pragma once
 #include "AudioManager.h"
 #include "Export.h"
-#include "ScriptBehaviour.h"
+#include "Behaviour.h"
 //#include "Component.h"
 #include "SimpleMath.h"
 
 namespace MMMEngine {
-	class MMMENGINE_API ListenerComponent : public ScriptBehaviour
+	class MMMENGINE_API ListenerComponent : public Behaviour
 	{
 	private:
-		RTTR_ENABLE(ScriptBehaviour)
+		RTTR_ENABLE(Behaviour)
 		RTTR_REGISTRATION_FRIEND
 		friend class ObjectManager;
 		friend class GameObject;
+		friend class BehaviourManager;
 		DirectX::SimpleMath::Vector3 pos;
 		DirectX::SimpleMath::Vector3 fwd;
 		DirectX::SimpleMath::Vector3 up;

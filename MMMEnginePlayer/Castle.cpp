@@ -26,7 +26,7 @@ void MMMEngine::Castle::AutoHeal()
 	prevHP = HP;
 	if (fighting)
 	{
-		NonfightDelay += Time::GetDeltaTime();
+		NonfightTimer += Time::GetDeltaTime();
 		if (NonfightTimer >= NonfightDelay)
 		{
 			fighting = false;
@@ -38,13 +38,15 @@ void MMMEngine::Castle::AutoHeal()
 		healTimer += Time::GetDeltaTime();
 		if (healTimer >= healDelay)
 		{
-			HP = std::min(HP + 3, maxHP);
+			HP = std::min(HP + healHP, maxHP);
 			healTimer = 0.0f;
 		}
 	}
 }
 
-void MMMEngine::Castle::CoinUp(float t)
+void MMMEngine::Castle::PointUp(float t)
 {
-	coin += static_cast<int>(t);
+	auto p = static_cast<int>(t);
+	point += p;
+	exp += 10 * p;
 }

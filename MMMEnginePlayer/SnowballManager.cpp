@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "Transform.h"
 #include "Castle.h"
+#include "Building.h"
 
 void MMMEngine::SnowballManager::Initialize()
 {
@@ -166,7 +167,7 @@ void MMMEngine::SnowballManager::AssembleSnow()
 		{
 			mainObj = obj;
 			mainSc = sc;
-			break; // 싱글 기준: 들고 있는 눈은 하나라고 가정
+			break;
 		}
 	}
 
@@ -241,7 +242,7 @@ void MMMEngine::SnowballManager::SnowToCastle()
 	if (d2 > r * r) return;
 
 	// 3) 코인 증가 (Castle 컴포넌트가 있다면)
-	castlecomp->CoinUp(mainSc->GetScale());
+	castlecomp->PointUp(mainSc->GetScale());
 
 	// 4) 매칭/캐리어 정리
 	if (auto player = mainSc->carrier)
@@ -252,6 +253,89 @@ void MMMEngine::SnowballManager::SnowToCastle()
 	}
 
 	// 5) 리스트 제거 + 파괴
+	RemoveFromList(mainObj);
+	Destroy(mainObj);
+}
+
+void MMMEngine::SnowballManager::SnowToBuilding()
+{
+	// 1) 메인(들고 있는 눈) 찾기
+	ObjPtr<GameObject> mainObj = nullptr;
+	ObjPtr<Snowball> mainSc = nullptr;
+
+	for (auto& obj : Snows)
+	{
+		if (!obj) continue;
+
+		auto sc = obj->GetComponent<Snowball>();
+		if (!sc) continue;
+
+		if (sc->IsCarried())
+		{
+			mainObj = obj;
+			mainSc = sc;
+			break;
+		}
+	}
+
+	if (!mainObj || !mainSc) return;
+
+	// 2) 들고 있는 눈 위치
+	auto mainPos = mainObj->GetTransform()->GetWorldPosition();
+
+	// 3) 필드의 모든 건물 찾기 (태그는 프로젝트에 맞게)
+	auto buildings = GameObject::FindGameObjectsWithTag("Building");
+	if (buildings.empty()) return;
+
+	// 4) CoinUpRange 안에 들어온 "가장 가까운 건물" 선택
+	ObjPtr<GameObject> bestBuildingObj = nullptr;
+	float bestD2 = FLT_MAX;
+
+	const float r = CoinupRange;
+	const float r2 = r * r;
+
+	for (auto& b : buildings)
+	{
+		if (!b) continue;
+
+		// 건물에 실제로 포인트 받을 컴포넌트가 있는지 확인
+		// 예: Building 컴포넌트(혹은 Castle과 동일한 인터페이스)
+		auto bcomp = b->GetComponent<Building>(); // <-- 너희 클래스명에 맞춰 수정
+		if (!bcomp) continue;
+
+		auto bpos = b->GetTransform()->GetWorldPosition();
+
+		float dx = mainPos.x - bpos.x;
+		float dz = mainPos.z - bpos.z;
+		float d2 = dx * dx + dz * dz;
+
+		if (d2 <= r2 && d2 < bestD2)
+		{
+			bestD2 = d2;
+			bestBuildingObj = b;
+		}
+	}
+
+	if (!bestBuildingObj) return;
+
+	// 5) 포인트 증가
+	if (auto bcomp = bestBuildingObj->GetComponent<Building>()) // 한 번 더 안전 체크
+	{
+		bcomp->PointUp(mainSc->GetScale());
+	}
+	else
+	{
+		return; // 컴포넌트가 없으면 처리 불가
+	}
+
+	// 6) 매칭/캐리어 정리
+	if (auto player = mainSc->carrier)
+	{
+		player->DetachSnowball();
+		mainSc->carrier = nullptr; // 또는 mainSc->ClearCarrier()
+	}
+
+	// 7) 리스트 제거 + 파괴
 	RemoveFromList(mainObj);
 	Destroy(mainObj);
 }

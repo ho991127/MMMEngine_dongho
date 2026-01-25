@@ -9,10 +9,10 @@ namespace MMMEngine {
 		{
 			HP = 30;
 			atk = 2;
-			velocity = 16.0f;
+			velocity = 13.0f;
 			playercheckdist = 12.0f;
-			battledist = 4.0f;
-			attackDelay = 1.2f;
+			battledist = 1.7f;
+			attackDelay = 0.65f;
 		}
 	};
 }
