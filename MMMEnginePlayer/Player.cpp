@@ -5,6 +5,26 @@
 #include "Transform.h"
 #include "Snowball.h"
 #include "SnowballManager.h"
+#include "rttr/registration"
+#include "rttr/detail/policies/ctor_policies.h"
+
+RTTR_PLUGIN_REGISTRATION
+{
+	using namespace rttr;
+	using namespace MMMEngine;
+
+	registration::class_<Player>("Player")
+		(rttr::metadata("wrapper_type", rttr::type::get<ObjPtr<Player>>()));
+
+	registration::class_<ObjPtr<Player>>("ObjPtr<Player>")
+		.constructor(
+			[]() {
+				return Object::NewObject<Player>();
+			});
+
+	type::register_wrapper_converter_for_base_classes<MMMEngine::ObjPtr<Player>>();
+}
+
 
 static float WrapPi(float a)
 {
@@ -29,6 +49,10 @@ static float StepYaw(float current, float target, float maxStep)
 	// 최단각 회전(일반 케이스)
 	float step = std::clamp(diff, -maxStep, +maxStep);
 	return WrapPi(current + step);
+}
+
+void MMMEngine::Player::Start()
+{
 }
 
 void MMMEngine::Player::Initialize()

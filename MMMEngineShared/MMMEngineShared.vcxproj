@@ -171,7 +171,6 @@
     <ClInclude Include="AssetsDatabase.h" />
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="BGMComponent.h" />
-    <ClInclude Include="EditorCamera.h" />
     <ClInclude Include="Behaviour.h" />
     <ClInclude Include="BoxColliderComponent.h" />
     <ClInclude Include="Camera.h" />
@@ -251,7 +250,6 @@
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="Behaviour.cpp" />
     <ClCompile Include="BGMComponent.cpp" />
-    <ClCompile Include="EditorCamera.cpp" />
     <ClCompile Include="BehaviourManager.cpp" />
     <ClCompile Include="BoxColliderComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
