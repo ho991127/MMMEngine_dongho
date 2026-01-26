@@ -3,6 +3,8 @@
 #include "ProjectManager.h"
 #include "DLLHotLoadHelper.h"
 #include "BehaviourManager.h"
+#include "RenderManager.h"
+#include "ShaderInfo.h"
 #include "SceneManager.h"
 #include "SceneSerializer.h"
 #include "StringHelper.h"
@@ -83,6 +85,8 @@ namespace MMMEngine::Editor
 
                 // 씬 매니저를 셧다운
                 // 오브젝트 매니저를 셧다운
+                RenderManager::Get().ClearAllCommands();
+
                 SceneManager::Get().ShutDown();
                 ObjectManager::Get().ShutDown();
 
@@ -93,9 +97,6 @@ namespace MMMEngine::Editor
                 auto currentProject = ProjectManager::Get().GetActiveProject();
                 SceneManager::Get().StartUp(currentProject.ProjectRootFS().generic_wstring() + L"/Assets/Scenes", currentProject.lastSceneIndex, true);
                 ObjectManager::Get().StartUp();
-
-
-                // todo : 씬 플레이 재시작하기
             }
         }
   
