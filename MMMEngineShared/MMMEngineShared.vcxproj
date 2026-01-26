@@ -229,7 +229,6 @@
     <ClInclude Include="Singleton.hpp" />
     <ClInclude Include="StringHelper.h" />
     <ClInclude Include="Texture2D.h" />
-    <ClInclude Include="TextResource.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="ResourceManager.h">

@@ -1,23 +1,17 @@
 <Project>
-  <Target Name="CopyBinariesToCommonBin" AfterTargets="Build"
-          Condition="'$(Platform)'=='x64' and ('$(Configuration)'=='Debug' or '$(Configuration)'=='Release')">
-    <!-- 솔루션 루트 기준 -->
+  <Target Name="CopyThirdPartyToOutput" AfterTargets="Build">
     <PropertyGroup>
-      <_SrcDir>$(SolutionDir)$(Platform)\$(Configuration)\</_SrcDir>
-      <_DstDir>$(SolutionDir)Common\Bin\$(Configuration)\</_DstDir>
+      <ThirdPartyDir>$(SolutionDir)Common\Bin\$(Configuration)\</ThirdPartyDir>
     </PropertyGroup>
 
-    <MakeDir Directories="$(_DstDir)" />
-
-    <!-- DLL/PDB/EXE 복사 -->
-    <ItemGroup>
-      <_FilesToCopy Include="$(_SrcDir)*.dll" />
-      <_FilesToCopy Include="$(_SrcDir)*.pdb" />
-      <_FilesToCopy Include="$(_SrcDir)*.exe" />
+    <ItemGroup Condition="Exists('$(ThirdPartyDir)')">
+      <ThirdPartyDlls Include="$(ThirdPartyDir)*.dll" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(_FilesToCopy)"
-          DestinationFolder="$(_DstDir)"
-          SkipUnchangedFiles="true" />
+    <Copy
+      SourceFiles="@(ThirdPartyDlls)"
+      DestinationFolder="$(OutDir)"
+      SkipUnchangedFiles="true"
+      Condition="@(ThirdPartyDlls) != ''" />
   </Target>
 </Project>
