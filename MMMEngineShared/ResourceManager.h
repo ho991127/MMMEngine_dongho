@@ -68,7 +68,7 @@ namespace MMMEngine
 		template<class T>
 		ResPtr<T> Load(std::wstring filePath)
 		{
-			static_assert(std::is_base_of_v<Resource, T>, u8"T는 반드시 Resource를 상속받아야 함");
+			static_assert(std::is_base_of_v<Resource, T>, "T must inherit from Resource");
 
 			std::wstring root = m_rootPath.generic_wstring();
 			if (!root.empty() && root.back() != L'/' && root.back() != L'\\')
