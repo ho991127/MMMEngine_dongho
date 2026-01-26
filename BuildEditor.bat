@@ -1,20 +1,27 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+setlocal EnableExtensions DisableDelayedExpansion
 
 set "ENGINE_DIR=%~dp0"
 if "%ENGINE_DIR:~-1%"=="\" set "ENGINE_DIR=%ENGINE_DIR:~0,-1%"
 
-set "MMMENGINE_DIR=%ENGINE_DIR%"
-
 set "PLATFORM=x64"
 set "SLN=%ENGINE_DIR%\MMMEngine.sln"
 
-if not exist "%SLN%" (
-  echo ERROR: Solution not found:
-  echo   %SLN%
-  pause
-  exit /b 1
-)
+echo ENGINE_DIR=[%ENGINE_DIR%]
+echo SLN=[%SLN%]
+echo.
+
+if not exist "%SLN%" goto :no_sln
+
+goto :after_sln_check
+
+:no_sln
+echo ERROR: Solution not found:
+echo   %SLN%
+pause
+exit /b 1
+
+:after_sln_check
 
 echo ===============================
 echo   MMMEngine Editor Build
