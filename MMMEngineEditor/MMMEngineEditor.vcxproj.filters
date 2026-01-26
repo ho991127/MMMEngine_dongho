@@ -269,8 +269,5 @@
     <ClCompile Include="ImGuizmo\ImGuizmo.cpp">
       <Filter>소스 파일\ImGuizmo</Filter>
     </ClCompile>
-    <ClCompile Include="..\MMMEngineShared\dxtk\Src\SimpleMath.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
