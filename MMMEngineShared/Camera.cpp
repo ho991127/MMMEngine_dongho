@@ -2,6 +2,7 @@
 #include "Transform.h"
 #include "rttr/registration"
 #include "SceneManager.h"
+#include "RenderManager.h"
 
 MMMEngine::ObjPtr<MMMEngine::Camera> MMMEngine::Camera::s_mainCam = nullptr;
 
@@ -89,6 +90,8 @@ void MMMEngine::Camera::Initialize()
 	m_aspect = 4 / 3;
 
 	MarkViewMatrixDirty();
+
+	RenderManager::Get().SetCamera(SelfPtr(this));
 }
 
 

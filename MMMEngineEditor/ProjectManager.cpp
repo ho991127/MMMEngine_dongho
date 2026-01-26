@@ -330,7 +330,8 @@ void MMMEngine::ExampleBehaviour::Update()
         std::string engineSharedIncludeDXTkInc = R"($(ProjectDir)..\..\..\MMMEngineShared\dxtk\inc)";
         std::string engineSharedDebugLibDir = R"($(ProjectDir)..\..\..\X64\Debug)";
         std::string engineSharedReleaseLibDir = R"($(ProjectDir)..\..\..\X64\Release)";
-        std::string engineSharedCommonLibDir = R"($(ProjectDir)..\..\..\Common\Lib)";
+        std::string engineSharedCommonDebugLibDir = R"($(ProjectDir)..\..\..\Common\Lib\Debug)";
+        std::string engineSharedCommonReleaseLibDir = R"($(ProjectDir)..\..\..\Common\Lib\Release)";
         std::string engineSharedLibName = "MMMEngineShared.lib";
         std::string rttrDebugLibName = "rttr_core_d.lib";
         std::string rttrReleaseLibName = "rttr_core.lib";
@@ -343,8 +344,9 @@ void MMMEngine::ExampleBehaviour::Update()
             engineSharedIncludeDXTk = engineDir + R"(\MMMEngineShared\dxtk)";
             engineSharedIncludeDXTkInc = engineDir + R"(\MMMEngineShared\dxtk\inc)";
             engineSharedDebugLibDir = engineDir + R"(\X64\Debug)";
-            engineSharedReleaseLibDir = engineDir + R"(\X64\Debug)";
-            engineSharedCommonLibDir = engineDir + R"(\Common\Lib)";
+            engineSharedReleaseLibDir = engineDir + R"(\X64\Release)";
+            engineSharedCommonDebugLibDir = engineDir + R"(\Common\Lib\Debug)";
+            engineSharedCommonReleaseLibDir = engineDir + R"(\Common\Lib\Release)";
         }
 
         std::ofstream out(vcxprojPath, std::ios::binary);
@@ -429,7 +431,7 @@ void MMMEngine::ExampleBehaviour::Update()
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>)xml" << engineSharedDebugLibDir << R"xml(;)xml" << engineSharedCommonLibDir << R"xml(;)xml" << physXLibsName << renderResourceLibs << R"xml(;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>)xml" << engineSharedDebugLibDir << R"xml(;)xml" << engineSharedCommonDebugLibDir << R"xml(;)xml" << physXLibsName << renderResourceLibs << R"xml(;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>)xml" << engineSharedLibName << R"xml(;)xml" << rttrDebugLibName << R"xml(;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -447,7 +449,7 @@ void MMMEngine::ExampleBehaviour::Update()
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>)xml" << engineSharedReleaseLibDir << R"xml(;)xml" << engineSharedCommonLibDir << R"xml(;)xml" << physXLibsName << renderResourceLibs << R"xml(;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>)xml" << engineSharedReleaseLibDir << R"xml(;)xml" << engineSharedCommonReleaseLibDir << R"xml(;)xml" << physXLibsName << renderResourceLibs << R"xml(;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>)xml" << engineSharedLibName << R"xml(;)xml" << rttrReleaseLibName << R"xml(;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

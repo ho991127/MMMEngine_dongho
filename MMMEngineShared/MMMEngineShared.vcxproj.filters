@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Behaviour.cpp" />
-    <ClCompile Include="BehaviourManger.cpp" />
+    <ClCompile Include="BehaviourManager.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="dxtk\Src\SimpleMath.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -56,12 +56,6 @@
     <ClCompile Include="RigidBodyComponent.cpp">
       <Filter>소스 파일\Core\Physcis API</Filter>
     </ClCompile>
-    <ClCompile Include="BoxColliderComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SphereColliderComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="RenderCommand.cpp">
       <Filter>소스 파일\Core\Render API</Filter>
     </ClCompile>
@@ -73,6 +67,15 @@
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>소스 파일\Core\Render API\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="dxtk\Src\WICTextureLoader.cpp">
+      <Filter>DXTK\Src</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereColliderComponent.cpp">
+      <Filter>소스 파일\Core\Physcis API</Filter>
+    </ClCompile>
+    <ClCompile Include="BoxColliderComponent.cpp">
+      <Filter>소스 파일\Core\Physcis API</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
