@@ -1,36 +1,20 @@
-#pragma once
+ï»¿#pragma once
 #include "ScriptBehaviour.h"
 #include <vector>
 #include <unordered_map>
 #include <SimpleMath.h>
-#include "Export.h"
 #include "rttr/type"
+#include "UserScriptsCommon.h"
 
 namespace MMMEngine {
 	class Player;
 	class Castle;
 	class Transform;
-	class SnowballManager : public ScriptBehaviour
+	class USERSCRIPTS SnowballManager : public ScriptBehaviour
 	{
+	private:
 		RTTR_ENABLE(ScriptBehaviour)
 		RTTR_REGISTRATION_FRIEND
-	public:
-		SnowballManager()
-		{
-			REGISTER_BEHAVIOUR_MESSAGE(Start)
-			REGISTER_BEHAVIOUR_MESSAGE(Update)
-		}
-		void Initialize() override;
-		void UnInitialize() override;
-		void Start();
-		void Update();
-		void OnScoopStart(Player& player);
-		void OnScoopHold(Player& player);
-		void OnScoopEnd(Player& player);
-		std::vector<ObjPtr<GameObject>> Snows;
-
-		static ObjPtr<SnowballManager> instance;
-	private:
 		void RemoveFromList(ObjPtr<GameObject> obj);
 		void AssembleSnow();
 		void SnowToCastle();
@@ -50,7 +34,21 @@ namespace MMMEngine {
 		ObjPtr<Transform> castletr;
 		DirectX::SimpleMath::Vector3 castlepos;
 
-		float CoinupRange = 1.0f; //¼º¿¡ ´«ÀÌ µé¾î°¡´Â °Å¸®
-		float offset = 1.5f;  //´« »ı¼º ½Ã ÇÃ·¹ÀÌ¾î¿ÍÀÇ °Å¸®
+		float CoinupRange = 1.0f; //ì„±ì— ëˆˆì´ ë“¤ì–´ê°€ëŠ” ê±°ë¦¬
+		float offset = 1.5f;  //ëˆˆ ìƒì„± ì‹œ í”Œë ˆì´ì–´ì™€ì˜ ê±°ë¦¬
+	public:
+		SnowballManager()
+		{
+			REGISTER_BEHAVIOUR_MESSAGE(Start)
+			REGISTER_BEHAVIOUR_MESSAGE(Update)
+		}
+		void Start();
+		void Update();
+		void OnScoopStart(Player& player);
+		void OnScoopHold(Player& player);
+		void OnScoopEnd(Player& player);
+		std::vector<ObjPtr<GameObject>> Snows;
+
+		static ObjPtr<SnowballManager> instance;
 	};
 }

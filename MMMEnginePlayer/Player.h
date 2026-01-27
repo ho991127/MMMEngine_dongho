@@ -1,14 +1,14 @@
-#pragma once
+ï»¿#pragma once
 #include "ScriptBehaviour.h"
 #include <DirectXMath.h>
 #include <SimpleMath.h>
-#include "Export.h"
+#include "UserScriptsCommon.h"
 #include "rttr/type"
 
 namespace MMMEngine {
 	class Transform;
 	class SnowballManager;
-	class MMMENGINE_API Player : public ScriptBehaviour
+	class USERSCRIPTS Player : public ScriptBehaviour
 	{
 	private:
 		RTTR_ENABLE(ScriptBehaviour)
@@ -19,19 +19,19 @@ namespace MMMEngine {
 		void ClearTarget();
 		void UpdateScoop();
 		void AutoHeal();
-		int HP = 100; //ÇÃ·¹ÀÌ¾î Ã¼·Â
+		int HP = 100; //í”Œë ˆì´ì–´ ì²´ë ¥
 		int prevHP = 100;
 		int maxHP = 100;
-		//Áö±İ ½ºÅÈÀº ´«ÇÊµå ±âÁØ, ÇÊµå°ü·Ã ¸Å´ÏÀú ÄÚµå¿¡ »óÅÂ Ãß°¡ ÈÄ ÀÔ·Â¹Ş¾Æ ½ºÅÈ º¯°æ
-		float velocity = 13.0f; //ÇÃ·¹ÀÌ¾î ¼Óµµ
-		float bestvelocity = 13.0f; // ÇÃ·¹ÀÌ¾î ±âº» ¼Óµµ
-		float yawRad = 0.0f;                         // ÇöÀç yaw
-		float turnSpeedRad = DirectX::XM_PI * 2.0f;  // 360deg/s (¿øÇÏ´Â °ªÀ¸·Î Æ©´×)
-		float battledist = 3.5f; //ÇÃ·¹ÀÌ¾î Àû °ø°İ °Å¸®
-		int atk = 10; //ÇÃ·¹ÀÌ¾î °ø°İ·Â
+		//ì§€ê¸ˆ ìŠ¤íƒ¯ì€ ëˆˆí•„ë“œ ê¸°ì¤€, í•„ë“œê´€ë ¨ ë§¤ë‹ˆì € ì½”ë“œì— ìƒíƒœ ì¶”ê°€ í›„ ì…ë ¥ë°›ì•„ ìŠ¤íƒ¯ ë³€ê²½
+		float velocity = 13.0f; //í”Œë ˆì´ì–´ ì†ë„
+		float bestvelocity = 13.0f; // í”Œë ˆì´ì–´ ê¸°ë³¸ ì†ë„
+		float yawRad = 0.0f;                         // í˜„ì¬ yaw
+		float turnSpeedRad = DirectX::XM_PI * 2.0f;  // 360deg/s (ì›í•˜ëŠ” ê°’ìœ¼ë¡œ íŠœë‹)
+		float battledist = 3.5f; //í”Œë ˆì´ì–´ ì  ê³µê²© ê±°ë¦¬
+		int atk = 10; //í”Œë ˆì´ì–´ ê³µê²©ë ¥
 		float attackTimer = 0.0f;
-		float attackDelay = 0.65f; //ÇÃ·¹ÀÌ¾î °ø°İ °£°İ
-		float pickupRange = 1.0f; //´« ÇÈ¾÷ °Å¸®
+		float attackDelay = 0.65f; //í”Œë ˆì´ì–´ ê³µê²© ê°„ê²©
+		float pickupRange = 1.0f; //ëˆˆ í”½ì—… ê±°ë¦¬
 		float healTimer = 0.0f;
 		float healDelay = 1.0f;
 		float nonfightTimer = 0.0f;
@@ -42,7 +42,7 @@ namespace MMMEngine {
 		float damageDelay = 0.1f;
 		ObjPtr<GameObject> matchedSnowball = nullptr;
 		ObjPtr<GameObject> targetEnemy = nullptr;
-		float offset = 1.5f; //´«°ú ÇÃ·¹ÀÌ¾î°£ÀÇ °Å¸®
+		float offset = 1.5f; //ëˆˆê³¼ í”Œë ˆì´ì–´ê°„ì˜ ê±°ë¦¬
 		bool isMoving = false;
 		bool scoopHeld = false;
 		ObjPtr<Transform> tr = GetTransform();
@@ -57,7 +57,7 @@ namespace MMMEngine {
 		void Start();
 		void Update();
 		void GetDamage(int t);
-		void VelocityDown(float t) { velocity = std::max(10.f - t, 6.5f); };
+		void VelocityDown(int t) { velocity = std::max<float>(bestvelocity - 0.5*t, 3.5f); };
 		void VelocityReturn() { velocity = bestvelocity; };
 		bool IsScoopMoving() const{ return scoopHeld&&isMoving; }
 		bool PlayerDeath() const { return HP <= 0; }

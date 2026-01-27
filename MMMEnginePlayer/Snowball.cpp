@@ -1,4 +1,4 @@
-#include "Snowball.h"
+癤�#include "Snowball.h"
 #include "MMMTime.h"
 #include "Player.h"
 #include "Transform.h"
@@ -27,21 +27,11 @@ void Start()
 
 }
 
-void MMMEngine::Snowball::Initialize()
-{
-	tr = GetTransform();
-}
-
-void MMMEngine::Snowball::UnInitialize()
-{
-
-}
-
 void MMMEngine::Snowball::Update()
 {
 	if (IsCarried())
 	{
-		pos = tr->GetWorldPosition();
+		pos = GetTransform()->GetWorldPosition();
 		auto trPlayer = carrier->GetTransform();
 		playerpos = trPlayer->GetWorldPosition();
 		playerrot = trPlayer->GetWorldRotation();
@@ -49,14 +39,12 @@ void MMMEngine::Snowball::Update()
 	}
 
 	DirectX::SimpleMath::Vector3 scaleVector = { scale, scale, scale };
-	tr->SetWorldScale(scaleVector);
+	GetTransform()->SetWorldScale(scaleVector);
 }
 
 void MMMEngine::Snowball::RollSnow()
 {
-	//지금은 플레이어가 잡고 이동만 해도 사이즈가 커짐, 필드 시스템 추후 추가
-	if(scale <= maxscale && carrier->IsScoopMoving())
-		scale = std::min(scale + Time::GetDeltaTime(), maxscale);
+	scale = std::min(scale + scaleup * point, 4.0f);
 	auto fwd = DirectX::SimpleMath::Vector3::Transform(
 		DirectX::SimpleMath::Vector3::Forward, playerrot);
 	fwd.y = 0.0f;
@@ -73,7 +61,7 @@ void MMMEngine::Snowball::RollSnow()
 		if (step >= dist) pos = target;
 		else pos += dir * step;
 
-		tr->SetWorldPosition(pos);
+		GetTransform()->SetWorldPosition(pos);
 	}
 }
 

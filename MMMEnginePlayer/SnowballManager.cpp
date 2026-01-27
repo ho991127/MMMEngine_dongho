@@ -1,4 +1,4 @@
-#include "SnowballManager.h"
+ï»¿#include "SnowballManager.h"
 #include "MMMInput.h"
 #include "MMMTime.h"
 #include "Snowball.h"
@@ -28,11 +28,6 @@ RTTR_PLUGIN_REGISTRATION
 
 void MMMEngine::SnowballManager::Start()
 {
-
-}
-
-void MMMEngine::SnowballManager::Initialize()
-{
 	castle = GameObject::Find("Castle");
 	if (castle)
 	{
@@ -40,17 +35,6 @@ void MMMEngine::SnowballManager::Initialize()
 		castletr = castle->GetTransform();
 	}
 	instance = GetGameObject()->GetComponent<SnowballManager>();
-}
-
-void MMMEngine::SnowballManager::UnInitialize()
-{
-	for (auto& snow : Snows)
-	{
-		Destroy(snow);
-	}
-	Snows.clear();
-	if (instance == GetGameObject()->GetComponent<SnowballManager>())
-		instance = nullptr;
 }
 
 void MMMEngine::SnowballManager::Update()
@@ -102,7 +86,7 @@ void MMMEngine::SnowballManager::OnScoopStart(Player& player)
 
 void MMMEngine::SnowballManager::OnScoopHold(Player& player)
 {
-	// ÀÌ¹Ì µé°í ÀÖÀ¸¸é »ı¼ºÇÒ ÀÌÀ¯ ¾øÀ½
+	// ì´ë¯¸ ë“¤ê³  ìˆìœ¼ë©´ ìƒì„±í•  ì´ìœ  ì—†ìŒ
 	if (player.GetMatchedSnowball()) return;
 
 	auto it = scoopStates.find(&player);
@@ -114,7 +98,7 @@ void MMMEngine::SnowballManager::OnScoopHold(Player& player)
 	st.holdTime += Time::GetDeltaTime();
 	if (st.holdTime < snowSpawnDelay) return;
 
-	// 1) »ı¼º À§Ä¡ °è»ê: ÇÃ·¹ÀÌ¾î ¾Õ(ÇöÀç rot/yaw ±âÁØ)
+	// 1) ìƒì„± ìœ„ì¹˜ ê³„ì‚°: í”Œë ˆì´ì–´ ì•(í˜„ì¬ rot/yaw ê¸°ì¤€)
 	auto tr = player.GetTransform();
 	if (!tr) return;
 
@@ -128,28 +112,28 @@ void MMMEngine::SnowballManager::OnScoopHold(Player& player)
 
 	auto spawnPos = playerPos + fwd * player.GetPickupRange();
 
-	// 2) ´« »ı¼º + µî·Ï
+	// 2) ëˆˆ ìƒì„± + ë“±ë¡
 	auto obj = NewObject<GameObject>();
 	obj->SetTag("Snowball");
 	obj->AddComponent<Snowball>();
 	obj->GetTransform()->SetWorldPosition(spawnPos);
 	Snows.push_back(obj);
 
-	// 3) »óÅÂ ÀüÀÌ(¸Å´ÏÀú Ã¥ÀÓ) + ÇÃ·¹ÀÌ¾î ¸ÅÄª
+	// 3) ìƒíƒœ ì „ì´(ë§¤ë‹ˆì € ì±…ì„) + í”Œë ˆì´ì–´ ë§¤ì¹­
 	if (auto sc = obj->GetComponent<Snowball>())
 	{
 		sc->carrier = &player;
 	}
 	player.AttachSnowball(obj);
 
-	// 4) È¦µå »óÅÂ Á¾·á/¸®¼Â
+	// 4) í™€ë“œ ìƒíƒœ ì¢…ë£Œ/ë¦¬ì…‹
 	st.active = false;
 	st.holdTime = 0.0f;
 }
 
 void MMMEngine::SnowballManager::OnScoopEnd(Player& player)
 {
-	// È¦µå/½ºÆù »óÅÂ Á¤¸® (¸ÅÄª À¯¹«¿Í ¹«°ü)
+	// í™€ë“œ/ìŠ¤í° ìƒíƒœ ì •ë¦¬ (ë§¤ì¹­ ìœ ë¬´ì™€ ë¬´ê´€)
 	auto it = scoopStates.find(&player);
 	if (it != scoopStates.end())
 	{
@@ -177,7 +161,7 @@ void MMMEngine::SnowballManager::RemoveFromList(ObjPtr<GameObject> obj)
 
 void MMMEngine::SnowballManager::AssembleSnow()
 {
-	// 1) ¸ŞÀÎ Ã£±â
+	// 1) ë©”ì¸ ì°¾ê¸°
 	ObjPtr<GameObject> mainObj = nullptr;
 	ObjPtr<Snowball> mainSc = nullptr;
 
@@ -188,8 +172,8 @@ void MMMEngine::SnowballManager::AssembleSnow()
 		auto sc = obj->GetComponent<Snowball>();
 		if (!sc) continue;
 
-		// carrier ±â¹İ (³×°¡ ¹æ±İ Ãß°¡ÇÑ °Í È°¿ë)
-		if (sc->IsCarried())   // ¶Ç´Â sc->IsCarried()
+		// carrier ê¸°ë°˜ (ë„¤ê°€ ë°©ê¸ˆ ì¶”ê°€í•œ ê²ƒ í™œìš©)
+		if (sc->IsCarried())   // ë˜ëŠ” sc->IsCarried()
 		{
 			mainObj = obj;
 			mainSc = sc;
@@ -199,11 +183,11 @@ void MMMEngine::SnowballManager::AssembleSnow()
 
 	if (!mainObj || !mainSc) return;
 
-	// 2) ¸ŞÀÎ ±âÁØ°ª Ä³½Ì
+	// 2) ë©”ì¸ ê¸°ì¤€ê°’ ìºì‹±
 	auto mainPos = mainObj->GetTransform()->GetWorldPosition();
-	float mainR = mainSc->GetScale();
+	float mainR = mainSc->GetPoint();
 
-	// 3) ÁÖº¯ ºñÄÁÆ®·Ñ ´«µé °Ë»ç + ÇÕÃ¼
+	// 3) ì£¼ë³€ ë¹„ì»¨íŠ¸ë¡¤ ëˆˆë“¤ ê²€ì‚¬ + í•©ì²´
 	for (int i = 0; i < (int)Snows.size(); ++i)
 	{
 		auto& otherObj = Snows[i];
@@ -212,14 +196,14 @@ void MMMEngine::SnowballManager::AssembleSnow()
 
 		auto scOther = otherObj->GetComponent<Snowball>();
 		if (!scOther) continue;
-		if (scOther->IsCarried()) continue; // ÄÁÆ®·Ñ ÁßÀÎ ¾Ö´Â ´ë»ó Á¦¿Ü
+		if (scOther->IsCarried()) continue; // ì»¨íŠ¸ë¡¤ ì¤‘ì¸ ì• ëŠ” ëŒ€ìƒ ì œì™¸
 
 		auto otherPos = otherObj->GetTransform()->GetWorldPosition();
 
 		float dx = otherPos.x - mainPos.x;
 		float dz = otherPos.z - mainPos.z;
 
-		float otherR = scOther->GetScale();
+		float otherR = scOther->GetPoint();
 		float sumR = mainR + otherR;
 
 		if (dx * dx + dz * dz <= sumR * sumR)
@@ -227,8 +211,8 @@ void MMMEngine::SnowballManager::AssembleSnow()
 			RemoveFromList(otherObj);
 			mainSc->EatSnow(otherObj);
 			--i;
-			mainR = mainSc->GetScale();
-			// mainPosµµ ÇÕÃ¼·Î ÀÌµ¿ÇÒ ¼ö ÀÖÀ¸¸é ¾÷µ¥ÀÌÆ®
+			mainR = mainSc->GetPoint();
+			// mainPosë„ í•©ì²´ë¡œ ì´ë™í•  ìˆ˜ ìˆìœ¼ë©´ ì—…ë°ì´íŠ¸
 			mainPos = mainObj->GetTransform()->GetWorldPosition();
 		}
 	}
@@ -236,7 +220,7 @@ void MMMEngine::SnowballManager::AssembleSnow()
 
 void MMMEngine::SnowballManager::SnowToCastle()
 {
-	// 1) ¸ŞÀÎ Ã£±â
+	// 1) ë©”ì¸ ì°¾ê¸°
 	ObjPtr<GameObject> mainObj = nullptr;
 	ObjPtr<Snowball> mainSc = nullptr;
 
@@ -257,35 +241,35 @@ void MMMEngine::SnowballManager::SnowToCastle()
 
 	if (!mainObj || !mainSc) return;
 
-	// 2) °Å¸® Ã¼Å© (XZ ±âÁØ)
+	// 2) ê±°ë¦¬ ì²´í¬ (XZ ê¸°ì¤€)
 	auto mainPos = mainObj->GetTransform()->GetWorldPosition();
 
 	float dx = mainPos.x - castlepos.x;
 	float dz = mainPos.z - castlepos.z;
 	float d2 = dx * dx + dz * dz;
 
-	float r = CoinupRange; // ÇÊ¿äÇÏ¸é mainR ´õÇØ¼­ ÆÇÁ¤ ³ĞÈú ¼öµµ ÀÖÀ½
+	float r = CoinupRange; // í•„ìš”í•˜ë©´ mainR ë”í•´ì„œ íŒì • ë„“í ìˆ˜ë„ ìˆìŒ
 	if (d2 > r * r) return;
 
-	// 3) ÄÚÀÎ Áõ°¡ (Castle ÄÄÆ÷³ÍÆ®°¡ ÀÖ´Ù¸é)
-	castlecomp->PointUp(mainSc->GetScale());
+	// 3) ì½”ì¸ ì¦ê°€ (Castle ì»´í¬ë„ŒíŠ¸ê°€ ìˆë‹¤ë©´)
+	castlecomp->PointUp(mainSc->GetPoint());
 
-	// 4) ¸ÅÄª/Ä³¸®¾î Á¤¸®
+	// 4) ë§¤ì¹­/ìºë¦¬ì–´ ì •ë¦¬
 	if (auto player = mainSc->carrier)
 	{
-		// ÇÃ·¹ÀÌ¾î°¡ µé°íÀÖ´ø matched¸¦ Ç®¾îÁÜ
+		// í”Œë ˆì´ì–´ê°€ ë“¤ê³ ìˆë˜ matchedë¥¼ í’€ì–´ì¤Œ
 		player->DetachSnowball();
-		mainSc->carrier = nullptr; // ¶Ç´Â mainSc->ClearCarrier()
+		mainSc->carrier = nullptr; // ë˜ëŠ” mainSc->ClearCarrier()
 	}
 
-	// 5) ¸®½ºÆ® Á¦°Å + ÆÄ±«
+	// 5) ë¦¬ìŠ¤íŠ¸ ì œê±° + íŒŒê´´
 	RemoveFromList(mainObj);
 	Destroy(mainObj);
 }
 
 void MMMEngine::SnowballManager::SnowToBuilding()
 {
-	// 1) ¸ŞÀÎ(µé°í ÀÖ´Â ´«) Ã£±â
+	// 1) ë©”ì¸(ë“¤ê³  ìˆëŠ” ëˆˆ) ì°¾ê¸°
 	ObjPtr<GameObject> mainObj = nullptr;
 	ObjPtr<Snowball> mainSc = nullptr;
 
@@ -306,14 +290,14 @@ void MMMEngine::SnowballManager::SnowToBuilding()
 
 	if (!mainObj || !mainSc) return;
 
-	// 2) µé°í ÀÖ´Â ´« À§Ä¡
+	// 2) ë“¤ê³  ìˆëŠ” ëˆˆ ìœ„ì¹˜
 	auto mainPos = mainObj->GetTransform()->GetWorldPosition();
 
-	// 3) ÇÊµåÀÇ ¸ğµç °Ç¹° Ã£±â (ÅÂ±×´Â ÇÁ·ÎÁ§Æ®¿¡ ¸Â°Ô)
+	// 3) í•„ë“œì˜ ëª¨ë“  ê±´ë¬¼ ì°¾ê¸° (íƒœê·¸ëŠ” í”„ë¡œì íŠ¸ì— ë§ê²Œ)
 	auto buildings = GameObject::FindGameObjectsWithTag("Building");
 	if (buildings.empty()) return;
 
-	// 4) CoinUpRange ¾È¿¡ µé¾î¿Â "°¡Àå °¡±î¿î °Ç¹°" ¼±ÅÃ
+	// 4) CoinUpRange ì•ˆì— ë“¤ì–´ì˜¨ "ê°€ì¥ ê°€ê¹Œìš´ ê±´ë¬¼" ì„ íƒ
 	ObjPtr<GameObject> bestBuildingObj = nullptr;
 	float bestD2 = FLT_MAX;
 
@@ -324,9 +308,9 @@ void MMMEngine::SnowballManager::SnowToBuilding()
 	{
 		if (!b) continue;
 
-		// °Ç¹°¿¡ ½ÇÁ¦·Î Æ÷ÀÎÆ® ¹ŞÀ» ÄÄÆ÷³ÍÆ®°¡ ÀÖ´ÂÁö È®ÀÎ
-		// ¿¹: Building ÄÄÆ÷³ÍÆ®(È¤Àº Castle°ú µ¿ÀÏÇÑ ÀÎÅÍÆäÀÌ½º)
-		auto bcomp = b->GetComponent<Building>(); // <-- ³ÊÈñ Å¬·¡½º¸í¿¡ ¸ÂÃç ¼öÁ¤
+		// ê±´ë¬¼ì— ì‹¤ì œë¡œ í¬ì¸íŠ¸ ë°›ì„ ì»´í¬ë„ŒíŠ¸ê°€ ìˆëŠ”ì§€ í™•ì¸
+		// ì˜ˆ: Building ì»´í¬ë„ŒíŠ¸(í˜¹ì€ Castleê³¼ ë™ì¼í•œ ì¸í„°í˜ì´ìŠ¤)
+		auto bcomp = b->GetComponent<Building>(); // <-- ë„ˆí¬ í´ë˜ìŠ¤ëª…ì— ë§ì¶° ìˆ˜ì •
 		if (!bcomp) continue;
 
 		auto bpos = b->GetTransform()->GetWorldPosition();
@@ -344,24 +328,24 @@ void MMMEngine::SnowballManager::SnowToBuilding()
 
 	if (!bestBuildingObj) return;
 
-	// 5) Æ÷ÀÎÆ® Áõ°¡
-	if (auto bcomp = bestBuildingObj->GetComponent<Building>()) // ÇÑ ¹ø ´õ ¾ÈÀü Ã¼Å©
+	// 5) í¬ì¸íŠ¸ ì¦ê°€
+	if (auto bcomp = bestBuildingObj->GetComponent<Building>()) // í•œ ë²ˆ ë” ì•ˆì „ ì²´í¬
 	{
-		bcomp->PointUp(mainSc->GetScale());
+		bcomp->PointUp(mainSc->GetPoint());
 	}
 	else
 	{
-		return; // ÄÄÆ÷³ÍÆ®°¡ ¾øÀ¸¸é Ã³¸® ºÒ°¡
+		return; // ì»´í¬ë„ŒíŠ¸ê°€ ì—†ìœ¼ë©´ ì²˜ë¦¬ ë¶ˆê°€
 	}
 
-	// 6) ¸ÅÄª/Ä³¸®¾î Á¤¸®
+	// 6) ë§¤ì¹­/ìºë¦¬ì–´ ì •ë¦¬
 	if (auto player = mainSc->carrier)
 	{
 		player->DetachSnowball();
-		mainSc->carrier = nullptr; // ¶Ç´Â mainSc->ClearCarrier()
+		mainSc->carrier = nullptr; // ë˜ëŠ” mainSc->ClearCarrier()
 	}
 
-	// 7) ¸®½ºÆ® Á¦°Å + ÆÄ±«
+	// 7) ë¦¬ìŠ¤íŠ¸ ì œê±° + íŒŒê´´
 	RemoveFromList(mainObj);
 	Destroy(mainObj);
 }

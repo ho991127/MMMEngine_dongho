@@ -1,4 +1,4 @@
-#include "Building.h"
+﻿#include "Building.h"
 #include "rttr/registration"
 #include "rttr/detail/policies/ctor_policies.h"
 
@@ -24,25 +24,14 @@ void MMMEngine::Building::Start()
 
 }
 
-void MMMEngine::Building::Initialize()
-{
-
-}
-
-void MMMEngine::Building::UnInitialize()
-{
-
-}
-
 void MMMEngine::Building::Update()
 {
 	if (HP <= 0)
 		Destroy(GetGameObject());
 }
 
-void MMMEngine::Building::PointUp(float t)
+void MMMEngine::Building::PointUp(int t)
 {
-	auto p = static_cast<int>(t);
-	point += p;
-	exp += 10 * p;
+	point += t;
+	exp += 10 * t;
 }

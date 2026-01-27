@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "ScriptBehaviour.h"
-#include "Export.h"
+#include "UserScriptsCommon.h"
 #include "rttr/type"
 
 namespace MMMEngine {
-	class MMMENGINE_API EnemySpawner : public ScriptBehaviour
+	class USERSCRIPTS EnemySpawner : public ScriptBehaviour
 	{
 		RTTR_ENABLE(ScriptBehaviour)
 		RTTR_REGISTRATION_FRIEND

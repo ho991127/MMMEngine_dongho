@@ -1,4 +1,4 @@
-#include "Enemy.h"
+ï»¿#include "Enemy.h"
 #include "Player.h"
 #include "Castle.h"
 #include "Building.h"
@@ -26,13 +26,6 @@ RTTR_PLUGIN_REGISTRATION
 
 void MMMEngine::Enemy::Start()
 {
-
-}
-
-void MMMEngine::Enemy::Initialize()
-{
-	tr = GetTransform();
-
 	player = GameObject::Find("Player");
 	if (player) {
 		playercomp = player->GetComponent<Player>();
@@ -47,16 +40,10 @@ void MMMEngine::Enemy::Initialize()
 	Configure();
 }
 
-void MMMEngine::Enemy::UnInitialize()
-{
-	player = nullptr;
-	castle = nullptr;
-}
-
 void MMMEngine::Enemy::Update()
 {
-	if (!tr || !playertr || !castletr || !playercomp || !castlecomp) return;
-	pos = tr->GetWorldPosition();
+	if (!playertr || !castletr || !playercomp || !castlecomp) return;
+	pos = GetTransform()->GetWorldPosition();
 	playerpos = playertr->GetWorldPosition();
 	castlepos = castletr->GetWorldPosition();
 
@@ -114,18 +101,18 @@ bool MMMEngine::Enemy::MoveToTarget(const DirectX::SimpleMath::Vector3 target, f
 
 	float dist2 = dx * dx + dz * dz;
 	if (dist2 <= stopDist * stopDist)
-		return false; // µµÂø(¶Ç´Â ÃæºÐÈ÷ °¡±î¿ò)
+		return false; // ë„ì°©(ë˜ëŠ” ì¶©ë¶„ížˆ ê°€ê¹Œì›€)
 
 	float dist = sqrtf(dist2);
 	dx /= dist; dz /= dist;
 
 	pos.x += dx * velocity * Time::GetDeltaTime();
 	pos.z += dz * velocity * Time::GetDeltaTime();
-	tr->SetWorldPosition(pos);
+	GetTransform()->SetWorldPosition(pos);
 
 	float yaw = atan2f(dx, dz);
 	auto rot = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(yaw, 0, 0);
-	tr->SetWorldRotation(rot);
+	GetTransform()->SetWorldRotation(rot);
 	return true;
 }
 
@@ -147,7 +134,7 @@ void MMMEngine::Enemy::CheckPlayer()
 {
 	auto fwd = DirectX::SimpleMath::Vector3::Transform(
 		DirectX::SimpleMath::Vector3(0, 0, 1),
-		tr->GetWorldRotation()
+		GetTransform()->GetWorldRotation()
 	);
 	fwd.y = 0.0f;
 	if (fwd.LengthSquared() < 1e-8f) return;

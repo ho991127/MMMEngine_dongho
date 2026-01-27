@@ -1,4 +1,4 @@
-#include "Player.h"
+ï»¿#include "Player.h"
 #include "MMMInput.h"
 #include "Enemy.h"
 #include "MMMTime.h"
@@ -33,20 +33,20 @@ static float WrapPi(float a)
 	return a;
 }
 
-// ±âº»Àº 'ÃÖ´Ü°¢'À¸·Î µ¹µÇ, Á¤È®È÷ 180µµ ±ÙÃ³¸é ¿À¸¥ÂÊÀ¸·Î °­Á¦
+// ê¸°ë³¸ì€ 'ìµœë‹¨ê°'ìœ¼ë¡œ ëŒë˜, ì •í™•íˆ 180ë„ ê·¼ì²˜ë©´ ì˜¤ë¥¸ìª½ìœ¼ë¡œ ê°•ì œ
 static float StepYaw(float current, float target, float maxStep)
 {
 	float diff = WrapPi(target - current); // [-pi, pi]
 
-	// 180µµ ±ÙÃ³(¹İÀü)¸é ¿À¸¥ÂÊ(½Ã°è¹æÇâ)À¸·Î µ¹°Ô °­Á¦
-	// ¿©±â¼­ ¿À¸¥ÂÊÀ» +yaw·Î Á¤ÀÇÇßÀ» ¶§: diff°¡ -pi ±ÙÃ³¸é +2pi·Î ¹Ù²ã¼­ +pi·Î ¸¸µé¾îÁÜ
+	// 180ë„ ê·¼ì²˜(ë°˜ì „)ë©´ ì˜¤ë¥¸ìª½(ì‹œê³„ë°©í–¥)ìœ¼ë¡œ ëŒê²Œ ê°•ì œ
+	// ì—¬ê¸°ì„œ ì˜¤ë¥¸ìª½ì„ +yawë¡œ ì •ì˜í–ˆì„ ë•Œ: diffê°€ -pi ê·¼ì²˜ë©´ +2pië¡œ ë°”ê¿”ì„œ +pië¡œ ë§Œë“¤ì–´ì¤Œ
 	const float eps = 0.01f;
 	if (fabsf(fabsf(diff) - DirectX::XM_PI) < eps)
 	{
 		if (diff < 0.0f) diff += DirectX::XM_2PI; // -pi -> +pi
 	}
 
-	// ÃÖ´Ü°¢ È¸Àü(ÀÏ¹İ ÄÉÀÌ½º)
+	// ìµœë‹¨ê° íšŒì „(ì¼ë°˜ ì¼€ì´ìŠ¤)
 	float step = std::clamp(diff, -maxStep, +maxStep);
 	return WrapPi(current + step);
 }
@@ -56,7 +56,7 @@ void MMMEngine::Player::Start()
 	tr = GetTransform();
 	auto fwd = tr->GetWorldMatrix().Forward();
 
-	// +Z°¡ Àü¹æÀÎ LH ±âÁØ yaw °è»ê
+	// +Zê°€ ì „ë°©ì¸ LH ê¸°ì¤€ yaw ê³„ì‚°
 	yawRad = atan2f(fwd.x, fwd.z);
 	yawRad = WrapPi(yawRad);
 }
@@ -71,10 +71,10 @@ void MMMEngine::Player::Update()
 	UpdateScoop();
 	if (matchedSnowball)
 	{
-		VelocityDown(matchedSnowball->GetComponent<Snowball>()->GetScale());
+		VelocityDown(matchedSnowball->GetComponent<Snowball>()->GetPoint());
 	}
 	if (Input::GetKey(KeyCode::Space)) {
-		//½ºÆäÀÌ½º ´©¸¥»óÅÂ¸é °ø°İºÒ°¡
+		//ìŠ¤í˜ì´ìŠ¤ ëˆ„ë¥¸ìƒíƒœë©´ ê³µê²©ë¶ˆê°€
 		ClearTarget();
 		return;
 	}
@@ -100,7 +100,7 @@ void MMMEngine::Player::HandleMovement()
 		pos.z += dz * velocity * Time::GetDeltaTime();
 		tr->SetWorldPosition(pos);
 
-		float desiredYaw = atan2f(dx, dz); // ¸ñÇ¥ yaw
+		float desiredYaw = atan2f(dx, dz); // ëª©í‘œ yaw
 		float maxStep = turnSpeedRad * Time::GetDeltaTime();
 
 		yawRad = StepYaw(yawRad, desiredYaw, maxStep);
@@ -145,7 +145,7 @@ void MMMEngine::Player::HandleAttack()
 	if (!targetEnemy) return;
 	auto tec = targetEnemy->GetComponent<Enemy>();
 	if (!tec) { ClearTarget(); return; }
-	//¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ¾ÆÁ÷ ¾ø¾î¼­ º°µµÀÇ Å¸ÀÌ¸Ó·Î µ¿ÀÛ. °ø°İ¸ğ¼Ç Ãß°¡ ÈÄ ¼öÁ¤
+	//ì• ë‹ˆë©”ì´ì…˜ì´ ì•„ì§ ì—†ì–´ì„œ ë³„ë„ì˜ íƒ€ì´ë¨¸ë¡œ ë™ì‘. ê³µê²©ëª¨ì…˜ ì¶”ê°€ í›„ ìˆ˜ì •
 	attackTimer += Time::GetDeltaTime();
 	if (attackTimer >= attackDelay)
 	{
@@ -230,12 +230,12 @@ void MMMEngine::Player::AutoHeal()
 void MMMEngine::Player::GetDamage(int t)
 {
 	if (damageTimer > 0.0f)
-		return; // ¹«Àû ½Ã°£ ÁßÀÌ¸é µ¥¹ÌÁö ¹«½Ã
+		return; // ë¬´ì  ì‹œê°„ ì¤‘ì´ë©´ ë°ë¯¸ì§€ ë¬´ì‹œ
 
 	HP -= t;
 	HP = std::max(HP, 0);
 
-	damageTimer = damageDelay; // ¹«Àû Å¸ÀÌ¸Ó ½ÃÀÛ
+	damageTimer = damageDelay; // ë¬´ì  íƒ€ì´ë¨¸ ì‹œì‘
 }
 
 void MMMEngine::Player::SnapToSnowball()

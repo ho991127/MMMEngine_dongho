@@ -1,8 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "Enemy.h"
+#include "rttr/type"
+#include "UserScriptsCommon.h"
 
 namespace MMMEngine {
-	class MMMENGINE_API NormalEnemy : public Enemy
+	class USERSCRIPTS NormalEnemy : public Enemy
 	{
 		RTTR_ENABLE(Enemy)
 		RTTR_REGISTRATION_FRIEND

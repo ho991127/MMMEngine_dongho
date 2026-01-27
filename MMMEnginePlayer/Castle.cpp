@@ -1,4 +1,4 @@
-#include "Castle.h"
+﻿#include "Castle.h"
 #include "MMMTime.h"
 #include "rttr/registration"
 #include "rttr/detail/policies/ctor_policies.h"
@@ -21,16 +21,6 @@ RTTR_PLUGIN_REGISTRATION
 }
 
 void MMMEngine::Castle::Start()
-{
-
-}
-
-void MMMEngine::Castle::Initialize()
-{
-
-}
-
-void MMMEngine::Castle::UnInitialize()
 {
 
 }
@@ -68,9 +58,8 @@ void MMMEngine::Castle::AutoHeal()
 	}
 }
 
-void MMMEngine::Castle::PointUp(float t)
+void MMMEngine::Castle::PointUp(int t)
 {
-	auto p = static_cast<int>(t);
-	point += p;
-	exp += 10 * p;
+	point += t;
+	exp += 10 * t;
 }
