@@ -84,6 +84,21 @@
     <ClCompile Include="PhysicsSettings.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="AudioManager.cpp">
+      <Filter>소스 파일\Core\Sound API</Filter>
+    </ClCompile>
+    <ClCompile Include="BGMComponent.cpp">
+      <Filter>소스 파일\Core\Sound API</Filter>
+    </ClCompile>
+    <ClCompile Include="ListenerComponent.cpp">
+      <Filter>소스 파일\Core\Sound API</Filter>
+    </ClCompile>
+    <ClCompile Include="SFX2DComponent.cpp">
+      <Filter>소스 파일\Core\Sound API</Filter>
+    </ClCompile>
+    <ClCompile Include="SFX3DComponent.cpp">
+      <Filter>소스 파일\Core\Sound API</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -294,14 +309,26 @@
     <ClInclude Include="UserScriptsCommon.h">
       <Filter>헤더 파일\Core\Behaviour API</Filter>
     </ClInclude>
-    <ClInclude Include="RenderShared.h">
-      <Filter>헤더 파일\Core\Render API</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsSettings.h">
       <Filter>헤더 파일\Core\Physics API</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioManager.h">
+      <Filter>헤더 파일\Core\Sound API</Filter>
+    </ClInclude>
+    <ClInclude Include="BGMComponent.h">
+      <Filter>헤더 파일\Core\Sound API</Filter>
+    </ClInclude>
+    <ClInclude Include="ListenerComponent.h">
+      <Filter>헤더 파일\Core\Sound API</Filter>
+    </ClInclude>
+    <ClInclude Include="SFX2DComponent.h">
+      <Filter>헤더 파일\Core\Sound API</Filter>
+    </ClInclude>
+    <ClInclude Include="SFX3DComponent.h">
+      <Filter>헤더 파일\Core\Sound API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -452,21 +479,6 @@
     <ClInclude Include="ResourceSerializer.h">
       <Filter>헤더 파일\Core\Render API\Tool</Filter>
     </ClInclude>
-    <ClInclude Include="AudioManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BGMComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SFX2DComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SFX3DComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ListenerComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="ShaderInfo.h">
       <Filter>헤더 파일\Core\Render API</Filter>
     </ClInclude>
@@ -577,21 +589,6 @@
     <ClCompile Include="RenderShared.cpp">
       <Filter>소스 파일\Core\Render API</Filter>
     </ClCompile>
-    <ClCompile Include="AudioManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BGMComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SFX2DComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SFX3DComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ListenerComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="ShaderInfo.cpp">
       <Filter>소스 파일\Core\Render API</Filter>
     </ClCompile>
@@ -607,6 +604,12 @@
     </Filter>
     <Filter Include="소스 파일\Core\Physcis API">
       <UniqueIdentifier>{e66850de-f491-4f75-9843-c4ad5567a533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Core\Sound API">
+      <UniqueIdentifier>{e8aa82fd-2fb4-4061-af85-e738423268e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Core\Sound API">
+      <UniqueIdentifier>{e525b282-e447-4ccb-b2a4-f3443edc580c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
