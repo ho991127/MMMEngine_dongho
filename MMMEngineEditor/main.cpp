@@ -61,8 +61,6 @@ void AfterProjectLoaded()
 
 	// 쉐이더 인포 시작하기
 	ShaderInfo::Get().StartUp();
-	
-	BuildManager::Get().SetProgressCallbackString([](const std::string& progress) { std::cout << progress.c_str() << std::endl; });
 }
 
 void Initialize()
@@ -186,8 +184,8 @@ void Update()
 					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnTriggerEnter", A);
 					break;															
 				case P_EvenType::T_out:											
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnTriggerEnter", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnTriggerEnter", A);
+					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnTriggerExit", B);
+					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnTriggerExit", A);
 					break;
 				}
 			}

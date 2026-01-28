@@ -26,6 +26,7 @@ using namespace MMMEngine::Utility;
 #include "GameViewWindow.h"
 #include "PhysicsSettingsWindow.h"
 #include "PlayerBuildWindow.h"
+#include "SceneNameWindow.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -330,7 +331,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
         {
             if (ImGui::BeginMenu(u8"파일"))
             {
-                if (ImGui::MenuItem(u8"씬 관리"))
+                if (ImGui::MenuItem(u8"씬 리스트"))
                 {
                     g_editor_window_scenelist = true;
                     p_open = false;
@@ -342,6 +343,11 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
 
                     SceneSerializer::Get().Serialize(*sceneRaw, SceneManager::Get().GetSceneListPath() + L"/" + StringHelper::StringToWString(sceneRaw->GetName()) + L".scene");
                     SceneSerializer::Get().ExtractScenesList(SceneManager::Get().GetAllSceneToRaw(), SceneManager::Get().GetSceneListPath());
+                    p_open = false;
+                }
+                if (ImGui::MenuItem(u8"씬 이름 변경"))
+                {
+                    g_editor_window_sceneName = true;
                     p_open = false;
                 }
 
@@ -357,7 +363,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                 ImGui::MenuItem(u8"게임", nullptr, &g_editor_window_gameView);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu(u8"빌드"))
+            if (ImGui::BeginMenu(u8"도구"))
             {
                 if (ImGui::MenuItem(u8"스크립트 빌드"))
                 {
@@ -368,10 +374,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                     g_editor_window_playerBuild = true;
 					p_open = false;
                 }
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu(u8"도구##fadeOut1"))
-            {
+                ImGui::Separator();
                 if (ImGui::MenuItem(u8"물리 설정"))
                 {
                     g_editor_window_physicsSettings = true;
@@ -694,6 +697,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
     FilesWindow::Get().Render();
     ScriptBuildWindow::Get().Render();
     SceneListWindow::Get().Render();
+	SceneNameWindow::Get().Render();
     HierarchyWindow::Get().Render();
     InspectorWindow::Get().Render();
     GameViewWindow::Get().Render();

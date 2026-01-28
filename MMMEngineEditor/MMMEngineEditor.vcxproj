@@ -180,6 +180,7 @@
     <ClInclude Include="Project.h" />
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="SceneListWindow.h" />
+    <ClInclude Include="SceneNameWindow.h" />
     <ClInclude Include="SceneViewWindow.h" />
     <ClInclude Include="ScriptBuildWindow.h" />
     <ClInclude Include="StartUpProjectWindow.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="PlayerBuildWindow.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
     <ClCompile Include="SceneListWindow.cpp" />
+    <ClCompile Include="SceneNameWindow.cpp" />
     <ClCompile Include="SceneViewWindow.cpp" />
     <ClCompile Include="ScriptBuildWindow.cpp" />
     <ClCompile Include="StartUpProjectWindow.cpp" />
