@@ -33,7 +33,7 @@ using namespace Microsoft::WRL;
 void AfterProjectLoaded()
 {
 	auto currentProject = ProjectManager::Get().GetActiveProject();
-	SceneManager::Get().StartUp(currentProject.ProjectRootFS().generic_wstring() + L"/Assets/Scenes", 0, true);
+	SceneManager::Get().StartUp(currentProject.ProjectRootFS().generic_wstring() + L"/Assets/Scenes", currentProject.lastSceneIndex, true);
 	GlobalRegistry::g_pApp->SetWindowTitle(L"MMMEditor [ " + Utility::StringHelper::StringToWString(currentProject.rootPath) + L" ]");
 	ObjectManager::Get().StartUp();
 
@@ -61,8 +61,6 @@ void AfterProjectLoaded()
 
 	// 쉐이더 인포 시작하기
 	ShaderInfo::Get().StartUp();
-	
-	BuildManager::Get().SetProgressCallbackString([](const std::string& progress) { std::cout << progress.c_str() << std::endl; });
 }
 
 void Initialize()
@@ -161,35 +159,46 @@ void Update()
 			BehaviourManager::Get().BroadCastBehaviourMessage("FixedUpdate");
 			PhysxManager::Get().StepFixed(fixedDt);
 
-			std::vector<std::tuple<ObjPtr<GameObject>, ObjPtr<GameObject>, P_EvenType>> vec;
+			std::vector<std::variant<CollisionInfo, TriggerInfo>> vec;
 
 			std::swap(vec, PhysxManager::Get().GetCallbackQue());
 
-			for (auto& [A, B, Event] : vec)
+			for (auto& ev : vec)
 			{
-				switch (Event)
-				{
-				case P_EvenType::C_enter:
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnCollisionEnter", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnCollisionEnter", A);
-					break;
-				case P_EvenType::C_stay:
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnCollisionStay", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnCollisionStay", A);
-					break;
-				case P_EvenType::C_out:
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnCollisionExit", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnCollisionExit", A);
-					break;
-				case P_EvenType::T_enter:
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnTriggerEnter", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnTriggerEnter", A);
-					break;															
-				case P_EvenType::T_out:											
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(A, "OnTriggerEnter", B);
-					BehaviourManager::Get().SpecificBroadCastBehaviourMessage(B, "OnTriggerEnter", A);
-					break;
-				}
+				//기존은 enum으로 switch 분기, variant를 쓰면서 실제타입분리를 위해 visit를 사용
+				//variant 안에 들어 있는 실제 타입에 따라 함수를 호출
+				std::visit([&](auto& e)
+					{
+						using T = std::decay_t<decltype(e)>;
+
+						if constexpr (std::is_same_v<T, CollisionInfo>)
+						{
+							switch (e.phase)
+							{
+							case CollisionPhase::Enter:
+								BehaviourManager::Get().SpecificBroadCastBehaviourMessage(e.self, "OnCollisionEnter", e);
+								break;
+							case CollisionPhase::Stay:
+								BehaviourManager::Get().SpecificBroadCastBehaviourMessage(e.self, "OnCollisionStay", e);
+								break;
+							case CollisionPhase::Exit:
+								BehaviourManager::Get().SpecificBroadCastBehaviourMessage(e.self, "OnCollisionExit", e);
+								break;
+							}
+						}
+						else if constexpr (std::is_same_v<T, TriggerInfo>)
+						{
+							switch (e.phase)
+							{
+							case TriggerPhase::Enter:
+								BehaviourManager::Get().SpecificBroadCastBehaviourMessage(e.self, "OnTriggerEnter", e);
+								break;
+							case TriggerPhase::Exit:
+								BehaviourManager::Get().SpecificBroadCastBehaviourMessage(e.self, "OnTriggerExit", e);
+								break;
+							}
+						}
+					}, ev);
 			}
 		});
 
@@ -220,6 +229,8 @@ void Update()
 
 void Release()
 {
+	ProjectManager::Get().SetLastSceneIndex(SceneManager::Get().GetCurrentScene().id);
+	ProjectManager::Get().SaveActiveProject();
 	PhysxManager::Get().UnbindScene();
 	GlobalRegistry::g_pApp = nullptr;
 	ImGuiEditorContext::Get().Uninitialize();
