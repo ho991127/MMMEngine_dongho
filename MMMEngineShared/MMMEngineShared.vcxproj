@@ -240,6 +240,7 @@
     <ClInclude Include="ShaderInfo.h" />
     <ClInclude Include="SkeletalMesh.h" />
     <ClInclude Include="SkySphere.h" />
+    <ClInclude Include="SoundController.h" />
     <ClInclude Include="SphereColliderComponent.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="UserScriptsCommon.h" />
@@ -313,6 +314,7 @@
     <ClCompile Include="ShaderInfo.cpp" />
     <ClCompile Include="SkeletalMesh.cpp" />
     <ClCompile Include="SkySphere.cpp" />
+    <ClCompile Include="SoundController.cpp" />
     <ClCompile Include="SphereColliderComponent.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="VShader.cpp" />

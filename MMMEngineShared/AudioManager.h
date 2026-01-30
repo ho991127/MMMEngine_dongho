@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <fmod.hpp>
 #include <unordered_map>
 #include <string>
@@ -20,12 +20,12 @@ namespace MMMEngine {
 			float fwdx, float fwdy, float fwdz,
 			float upx, float upy, float upz);
 		
-		//°¢ ÄÄÆ÷³ÍÆ®¿¡¼­ È£Ãâ
+		//ê° ì»´í¬ë„ŒíŠ¸ì—ì„œ í˜¸ì¶œ
 		FMOD::Channel* PlayBGM(const std::string& id);
 		FMOD::Channel* PlaySFX2D(const std::string& id);
 		FMOD::Channel* PlaySFX3D(const std::string& id, float x, float y, float z);
 
-		//SoundManager¿¡¼­ È£Ãâ
+		//SoundControllerì—ì„œ í˜¸ì¶œ
 		void RegisterBGM(const std::string& id, const char* path, bool loop);
 		void RegisterSFX2D(const std::string& id, const char* path, bool loop);
 		void RegisterSFX3D(const std::string& id, const char* path, float min, float max, bool loop);

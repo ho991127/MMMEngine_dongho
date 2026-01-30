@@ -1,4 +1,4 @@
-#include "AudioManager.h"
+ï»¿#include "AudioManager.h"
 
 #include <fmod_errors.h>
 #include <fstream>
@@ -8,17 +8,17 @@ DEFINE_SINGLETON(MMMEngine::AudioManager)
 
 void MMMEngine::AudioManager::StartUp()
 {
-	//½Ã½ºÅÛ »ý¼º
+	//ì‹œìŠ¤í…œ ìƒì„±
 	FMOD_RESULT r = FMOD::System_Create(&mSystem);
 	if (!FMOD_CHECK(r) || !mSystem)
 		return;
 
-	//½Ã½ºÅÛ ÃÊ±âÈ­
+	//ì‹œìŠ¤í…œ ì´ˆê¸°í™”
 	r = mSystem->init(512, FMOD_INIT_NORMAL, nullptr);
 	if (!FMOD_CHECK(r))
 		return;
 
-	//3D ¼³Á¤
+	//3D ì„¤ì •
 	const float dopplerScale = 1.0f;
 	const float distanceFactor = 1.0f;
 	const float rolloffScale = 1.0f;
@@ -27,7 +27,7 @@ void MMMEngine::AudioManager::StartUp()
 	if (!FMOD_CHECK(r))
 		return;
 
-	//¸®½º³Ê ±âº»°ª ¼¼ÆÃ
+	//ë¦¬ìŠ¤ë„ˆ ê¸°ë³¸ê°’ ì„¸íŒ…
 	mListenerPos = V3(0.0f, 0.0f, 0.0f);
 
 	FMOD_VECTOR vel = V3(0.0f, 0.0f, 0.0f);
@@ -37,7 +37,7 @@ void MMMEngine::AudioManager::StartUp()
 	r = mSystem->set3DListenerAttributes(0, &mListenerPos, &vel, &fwd, &up);
 	if (!FMOD_CHECK(r))
 		return;
-	//¹Ý¿µ
+	//ë°˜ì˜
 	r = mSystem->update();
 	if (!FMOD_CHECK(r))
 		return;
@@ -283,12 +283,9 @@ bool MMMEngine::AudioManager::RegisterSound(const std::string& csvPath)
 
 		std::string kind = cols[0];
 		std::string id = cols[1];
-		std::string filename = cols[2];
-		std::string path;
-		if (kind == "bgm")
-			path = mBGMPath + "/" + filename;
-		else if (kind == "sfx2d" || kind == "sfx3d")
-			path = mSFXPath + "/" + filename;
+		std::string path = cols[2];
+		if (path.empty()) continue;
+		for (auto& c : kind) c = (char)tolower(c);
 		bool loop = false;
 		float min = 1.f;
 		float max = 20.f;
