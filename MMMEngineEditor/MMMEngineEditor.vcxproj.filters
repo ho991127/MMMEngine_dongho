@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -79,9 +79,6 @@
     <Filter Include="소스 파일\EditorCamera">
       <UniqueIdentifier>{bee8b106-bde9-4ffa-9315-07b901dba3c6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\EditorWindow\CustomRenderer">
-      <UniqueIdentifier>{4254a7e0-283f-4df6-ac1c-37939482433e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\EditorWIndow\CustomRenderer">
       <UniqueIdentifier>{02cc79c3-2dd4-4317-bec7-70685a0741d9}</UniqueIdentifier>
     </Filter>
@@ -90,6 +87,9 @@
     </Filter>
     <Filter Include="헤더 파일\ImGuizmo">
       <UniqueIdentifier>{d1df62e8-7996-4171-9c42-b66dc185b68c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\EditorWindow\ForEditorContext\CustomRenderer">
+      <UniqueIdentifier>{4254a7e0-283f-4df6-ac1c-37939482433e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +144,9 @@
     <ClInclude Include="BuildManager.h">
       <Filter>헤더 파일\Build</Filter>
     </ClInclude>
+    <ClInclude Include="UserScriptsGenerator.h">
+      <Filter>헤더 파일\Build</Filter>
+    </ClInclude>
     <ClInclude Include="DLLHotLoadHelper.h">
       <Filter>헤더 파일\Helper</Filter>
     </ClInclude>
@@ -168,6 +171,9 @@
     <ClInclude Include="AssimpLoader.h">
       <Filter>헤더 파일\Tools</Filter>
     </ClInclude>
+    <ClInclude Include="FontImporter.h">
+      <Filter>헤더 파일\Tools</Filter>
+    </ClInclude>
     <ClInclude Include="EditorCamera.h">
       <Filter>헤더 파일\EditorCamera</Filter>
     </ClInclude>
@@ -178,7 +184,7 @@
       <Filter>헤더 파일\EditorWindow</Filter>
     </ClInclude>
     <ClInclude Include="EditorGridRenderer.h">
-      <Filter>헤더 파일\EditorWindow\CustomRenderer</Filter>
+      <Filter>헤더 파일\EditorWindow\ForEditorContext\CustomRenderer</Filter>
     </ClInclude>
     <ClInclude Include="EditorShader.h">
       <Filter>헤더 파일\EditorRegistry</Filter>
@@ -192,6 +198,9 @@
     <ClInclude Include="PlayerBuildWindow.h">
       <Filter>헤더 파일\EditorWindow\Popup</Filter>
     </ClInclude>
+    <ClInclude Include="PrefabMaker.h">
+      <Filter>헤더 파일\Helper</Filter>
+    </ClInclude>
     <ClInclude Include="SceneNameWindow.h">
       <Filter>헤더 파일\EditorWindow\Popup</Filter>
     </ClInclude>
@@ -200,6 +209,12 @@
     </ClInclude>
     <ClInclude Include="DebugDraw.h">
       <Filter>헤더 파일\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="AssimpLoaderWindow.h">
+      <Filter>헤더 파일\EditorWindow\Popup</Filter>
+    </ClInclude>
+    <ClInclude Include="FontImporterWindow.h">
+      <Filter>헤더 파일\EditorWindow\Popup</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -248,6 +263,9 @@
     <ClCompile Include="BuildManager.cpp">
       <Filter>소스 파일\Build</Filter>
     </ClCompile>
+    <ClCompile Include="UserScriptsGenerator.cpp">
+      <Filter>소스 파일\Build</Filter>
+    </ClCompile>
     <ClCompile Include="SceneListWindow.cpp">
       <Filter>소스 파일\EditorWIndow\Popup</Filter>
     </ClCompile>
@@ -264,6 +282,9 @@
       <Filter>소스 파일\EditorWIndow</Filter>
     </ClCompile>
     <ClCompile Include="AssimpLoader.cpp">
+      <Filter>소스 파일\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="FontImporter.cpp">
       <Filter>소스 파일\Tools</Filter>
     </ClCompile>
     <ClCompile Include="EditorCamera.cpp">
@@ -287,6 +308,9 @@
     <ClCompile Include="PlayerBuildWindow.cpp">
       <Filter>소스 파일\EditorWIndow\Popup</Filter>
     </ClCompile>
+    <ClCompile Include="PrefabMaker.cpp">
+      <Filter>소스 파일\Helper</Filter>
+    </ClCompile>
     <ClCompile Include="SceneNameWindow.cpp">
       <Filter>소스 파일\EditorWIndow\Popup</Filter>
     </ClCompile>
@@ -295,6 +319,12 @@
     </ClCompile>
     <ClCompile Include="DebugDraw.cpp">
       <Filter>소스 파일\Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="AssimpLoaderWindow.cpp">
+      <Filter>소스 파일\EditorWIndow\Popup</Filter>
+    </ClCompile>
+    <ClCompile Include="FontImporterWindow.cpp">
+      <Filter>소스 파일\EditorWIndow\Popup</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,9 +2,13 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <cstring>
 
 #include "EditorRegistry.h"
 #include "ProjectManager.h"
+#include "BuildManager.h"
+#include "PrefabMaker.h"
+#include "SceneManager.h"
 
 using namespace MMMEngine::EditorRegistry;
 
@@ -297,6 +301,22 @@ void MMMEngine::Editor::FilesWindow::DrawGridView(const fs::path& root)
             std::string droppedPath((const char*)payload->Data, payload->DataSize - 1);
             m_moveQueue.push_back({ droppedPath, m_currentDirectory.string() });
         }
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("gameobject_muid"))
+        {
+            if (payload->Data && payload->DataSize == sizeof(MMMEngine::Utility::MUID))
+            {
+                MMMEngine::Utility::MUID muid;
+                std::memcpy(&muid, payload->Data, sizeof(MMMEngine::Utility::MUID));
+
+                auto sceneRef = MMMEngine::SceneManager::Get().GetCurrentScene();
+                auto dragged = MMMEngine::SceneManager::Get().FindWithMUID(sceneRef, muid);
+                if (dragged.IsValid())
+                {
+                    MMMEngine::Editor::PrefabMaker::Get().CreatePrefabFromGameObject(
+                        dragged, m_currentDirectory);
+                }
+            }
+        }
         ImGui::EndDragDropTarget();
     }
 
@@ -491,6 +511,22 @@ void MMMEngine::Editor::FilesWindow::DrawGridItem(const fs::path& path, bool isD
             std::string droppedPath((const char*)payload->Data, payload->DataSize - 1);
             m_moveQueue.push_back({ droppedPath, pathStr });
         }
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("gameobject_muid"))
+        {
+            if (payload->Data && payload->DataSize == sizeof(MMMEngine::Utility::MUID))
+            {
+                MMMEngine::Utility::MUID muid;
+                std::memcpy(&muid, payload->Data, sizeof(MMMEngine::Utility::MUID));
+
+                auto sceneRef = MMMEngine::SceneManager::Get().GetCurrentScene();
+                auto dragged = MMMEngine::SceneManager::Get().FindWithMUID(sceneRef, muid);
+                if (dragged.IsValid())
+                {
+                    MMMEngine::Editor::PrefabMaker::Get().CreatePrefabFromGameObject(
+                        dragged, fs::path(pathStr));
+                }
+            }
+        }
         ImGui::EndDragDropTarget();
     }
 
@@ -610,12 +646,12 @@ namespace MMMEngine
     public:
         )" << scriptName << R"(()
         {
-            REGISTER_BEHAVIOUR_MESSAGE(Start)
-            REGISTER_BEHAVIOUR_MESSAGE(Update)
         }
 
+        USCRIPT_MESSAGE()
         void Start();
 
+        USCRIPT_MESSAGE()
         void Update();
     };
 }
@@ -632,24 +668,6 @@ namespace MMMEngine
             R"(#include "Export.h"
 #include "ScriptBehaviour.h"
 #include ")" << scriptName << R"(.h"
-#include "rttr/registration"
-#include "rttr/detail/policies/ctor_policies.h"
-
-RTTR_PLUGIN_REGISTRATION
-{
-	using namespace rttr;
-	using namespace MMMEngine;
-
-	registration::class_<)" << scriptName << R"(>(")" << scriptName << R"(")
-        (rttr::metadata("wrapper_type_name", "ObjPtr<)" << scriptName << R"("));
-
-	registration::class_<ObjPtr<)" << scriptName << R"(>>("ObjPtr<)" << scriptName << R"(>")
-		.constructor(
-			[]() {
-				return Object::NewObject<)" << scriptName << R"(>();
-			})
-        .method("Inject", &ObjPtr<)" << scriptName << R"()>::Inject);
-}
 
 void MMMEngine::)" << scriptName << R"(::Start()
 {

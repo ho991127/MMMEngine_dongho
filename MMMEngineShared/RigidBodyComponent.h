@@ -36,6 +36,20 @@ namespace MMMEngine {
 			Acceleration
 		};
 
+		// 충돌 검출 모드
+		enum class CollisionDetectionMode
+		{
+			Discrete,
+			Continuous
+		};
+
+		// 보간 모드
+		enum class InterpolationMode
+		{
+			None,
+			Interpolate
+		};
+
 		struct Desc
 		{
 			Type type = Type::Dynamic;
@@ -46,12 +60,25 @@ namespace MMMEngine {
 			float angularDamping = 0.05f;
 			bool useGravity = true;
 			bool isKinematic = false;
+			bool lockPosX = false;
+			bool lockPosY = false;
+			bool lockPosZ = false;
+			bool lockRotX = false;
+			bool lockRotY = false;
+			bool lockRotZ = false;
+			uint32_t solverPositionIters = 8;
+			uint32_t solverVelocityIters = 2;
+			CollisionDetectionMode collisionMode = CollisionDetectionMode::Discrete;
+			InterpolationMode interpolation = InterpolationMode::None;
 			
 			Desc() = default;
 
-			Desc(Type _type, float _mass, float _linearDamping, float _angularDamping, bool _useGravity, bool _isKinematic) :
-			type(_type), mass(_mass) , linearDamping(_linearDamping), angularDamping(_angularDamping), useGravity(_useGravity), isKinematic(_isKinematic)
-			{}
+			Desc(Type _type, float _mass, float _linearDamping, float _angularDamping, bool _useGravity, bool _isKinematic,
+				bool _lockPosX , bool _lockPosY, bool _lockPosZ, bool _lockRotX, bool _lockRotY, bool _lockRotZ,
+				uint32_t _solverPositionIters, uint32_t _solverVelocityIters, CollisionDetectionMode _collisionMode, InterpolationMode _interpolation) :
+			type(_type), mass(_mass) , linearDamping(_linearDamping), angularDamping(_angularDamping), useGravity(_useGravity),
+			isKinematic(_isKinematic), lockPosX(_lockPosX), lockPosY(_lockPosY), lockPosZ(_lockPosZ), lockRotX(_lockRotX), lockRotY(_lockRotY),
+				lockRotZ(_lockRotZ), solverPositionIters(_solverPositionIters), solverVelocityIters(_solverVelocityIters),  collisionMode(_collisionMode), interpolation(_interpolation) {}
 		};
 
 
@@ -80,6 +107,7 @@ namespace MMMEngine {
 		void PushToPhysics();
 		//simulate이후 getGlobalPose()일어서 m_Tr에 반영하기 위한 함수
 		void PullFromPhysics();
+		void ApplyInterpolation(float alpha);
 
 		//좌표를 강제로 바꿨을때 dirty설정 ( 외부적 요인으로 인해 변경했을때만 호출 )
 		void PushPoseIfDirty();
@@ -115,8 +143,8 @@ namespace MMMEngine {
 
 		DirectX::SimpleMath::Vector3 GetAngularVelocity() const;
 
-		void SetisAutoRigid(bool value);
-		bool GetisAutoRigid();
+		//void SetisAutoRigid(bool value);
+		//bool GetisAutoRigid();
 
 		void WakeUp();
 
@@ -127,6 +155,16 @@ namespace MMMEngine {
 		float GetLineDamping() { return m_Desc.linearDamping; }
 		float GetAngularDamping() { return m_Desc.angularDamping; }
 		Type GetType() { return m_Desc.type; }
+		bool GetLockPosX() { return m_Desc.lockPosX; }
+		bool GetLockPosY() { return m_Desc.lockPosY; }
+		bool GetLockPosZ() { return m_Desc.lockPosZ; }
+		bool GetLockRotX() { return m_Desc.lockRotX; }
+		bool GetLockRotY() { return m_Desc.lockRotY; }
+		bool GetLockRotZ() { return m_Desc.lockRotZ; }
+		uint32_t GetSolverPositionIters() { return m_Desc.solverPositionIters; }
+		uint32_t GetSolverVelocityIters() { return m_Desc.solverVelocityIters; }
+		CollisionDetectionMode GetCollisionMode() { return m_Desc.collisionMode; }
+		InterpolationMode GetInterpolationMode() { return m_Desc.interpolation; }
 
 
 		void SetUseGravity(bool value);
@@ -135,13 +173,23 @@ namespace MMMEngine {
 		void SetLineDamping(float lin) { m_Desc.linearDamping = lin; m_DescDirty = true; m_WakeRequested = true; }
 		void SetAngularDamping(float ang) { m_Desc.angularDamping = ang, m_DescDirty = true; m_WakeRequested = true; }
 		void SetType(Type newType);
+		void SetLockPosX(bool value) { m_Desc.lockPosX = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetLockPosY(bool value) { m_Desc.lockPosY = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetLockPosZ(bool value) { m_Desc.lockPosZ = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetLockRotX(bool value) { m_Desc.lockRotX = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetLockRotY(bool value) { m_Desc.lockRotY = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetLockRotZ(bool value) { m_Desc.lockRotZ = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetSolverPositionIters(uint32_t value) { m_Desc.solverPositionIters = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetSolverVelocityIters(uint32_t value) { m_Desc.solverVelocityIters = value; m_DescDirty = true; m_WakeRequested = true; }
+		void SetCollisionMode(CollisionDetectionMode mode) { m_Desc.collisionMode = mode; m_DescDirty = true; m_WakeRequested = true; }
+		void SetInterpolationMode(InterpolationMode mode) { m_Desc.interpolation = mode; }
 
 		physx::PxRigidActor* GetPxActor() const;
 
 
 		Vector3 GetRequestedPos() { return m_RequestedPos; }
 		Quaternion GetRequestedRot() { return m_RequestedRot; }
-		void AttachShapeOnly(physx::PxShape* shape);
+		//void AttachShapeOnly(physx::PxShape* shape);
 		void SetType_Internal();
 		bool HasPendingTypeChange();
 		void OffPendingType();
@@ -158,6 +206,10 @@ namespace MMMEngine {
 		// 요 각도 (라디안)
 		float Px_GetYaw() const;
 
+
+		void MarkMassDirty();
+		bool IsMassDirty() const;
+		void ClearMassDirty();
 	private:
 		Desc m_Desc;
 
@@ -210,8 +262,6 @@ namespace MMMEngine {
 
 		physx::PxPhysics* m_Physics = nullptr;
 
-		bool m_IsAutoRigid = false;
-
 		void BindTeleport();
 
 		//settype용함수
@@ -219,10 +269,17 @@ namespace MMMEngine {
 		Type m_RequestedType = Type::Dynamic;
 		Vector3 m_RequestedPos{};
 		Quaternion m_RequestedRot{};
+		Pose m_InterpPrev{};
+		Pose m_InterpCurr{};
+		bool m_InterpInitialized = false;
 	private:
 		physx::PxForceMode::Enum ToPxForceMode(ForceMode mode);
+		void ApplyLockFlags(physx::PxRigidDynamic* body);
+		void SyncInterpolationPose(const Vector3& pos, const Quaternion& rot);
 
 		//collider 전체 삭제에 대한 책임을 가지는 단 하나의 rigid 보장 bool flag
 		bool m_ColliderMaster = false;
+
+		bool m_MassDirty = false;
 	};
 }

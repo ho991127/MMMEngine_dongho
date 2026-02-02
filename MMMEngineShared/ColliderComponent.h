@@ -18,6 +18,8 @@ namespace MMMEngine
 		{
 			if (m_Shape && m_Owned) { m_Shape->release(); }
 			m_Shape = nullptr;
+			if (m_Material && m_MaterialOwned) { m_Material->release(); }
+			m_Material = nullptr;
 		};
 
 		enum class ShapeMode : uint8_t
@@ -32,9 +34,23 @@ namespace MMMEngine
 		virtual void BuildShape(physx::PxPhysics* physics, physx::PxMaterial* material) = 0;
 
 		void Initialize() override;
+		void UnInitialize() override;
+
+		//actor에서 셰이더 떼는용도 ( 삭제용도가 아닌 rigid를 옮길때 사용 )
+		void DetachShapeFromActor();
+		void AttachShapeFromActor(physx::PxRigidActor* Actor);
 
 		physx::PxShape* GetPxShape() const { return m_Shape; }
 		ShapeMode GetShapeMode() const { return m_Mode; }
+
+		float GetStaticFriction() const { return m_StaticFriction; }
+		float GetDynamicFriction() const { return m_DynamicFriction; }
+		float GetRestitution() const { return m_Restitution; }
+		void SetStaticFriction(float value);
+		void SetDynamicFriction(float value);
+		void SetRestitution(float value);
+		physx::PxMaterial* GetPxMaterial() const { return m_Material; }
+
 
 
 		// 공통 설정(Shape 생성 전/후 둘 다 안전하게 동작)
@@ -86,6 +102,14 @@ namespace MMMEngine
 		//디버그 함수
 		virtual void PrintFilter() {};
 
+		void SetChildValue(ObjPtr<Transform> T);
+		bool GetChildValue();
+
+		void NoticeCompoundCollider(ObjPtr<Transform> preParent);
+
+		void SetLocalShape();
+
+		void SetRigidOffsetPose(const physx::PxTransform& pose);
 
 	protected:
 		// 파생 클래스가 shape 생성 후 반드시 호출
@@ -100,16 +124,23 @@ namespace MMMEngine
 
 
 		virtual void ApplyLocalPose();
-
-		void ApplyShapeModeFlags();
-
 		
 
+		void ApplyShapeModeFlags();
+		void ApplyMaterial();
+		void EnsureMaterial();
+
+		
 
 	protected:
 		physx::PxShape* m_Shape = nullptr;
 		bool m_Owned = true;
+		physx::PxMaterial* m_Material = nullptr;
+		bool m_MaterialOwned = true;
 
+		float m_StaticFriction = 0.5f;
+		float m_DynamicFriction = 0.5f;
+		float m_Restitution = 0.0f;
 
 		ShapeMode m_Mode = ShapeMode::Simulation;
 		//이 shape가 Scene Query시스템에 포함될지 정함
@@ -119,6 +150,7 @@ namespace MMMEngine
 
 		//오프셋
 		physx::PxTransform m_LocalPose = physx::PxTransform(physx::PxIdentity);
+		physx::PxTransform m_RigidOffsetPose = physx::PxTransform(physx::PxIdentity);
 		Vector3 m_LocalCenter;
 		Quaternion m_LocalQuater;
 
@@ -133,7 +165,9 @@ namespace MMMEngine
 
 		bool m_geometryDirty = true;
 
-		bool m_filterDirty = true;		
+		bool m_filterDirty = true;
+
+		bool Child_value = false;
 
 	//콜리더 shape return 가상함수
 	public:

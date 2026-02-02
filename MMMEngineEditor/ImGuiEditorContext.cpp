@@ -9,6 +9,7 @@
 #include "SceneManager.h"
 #include "SceneSerializer.h"
 #include "ProjectManager.h"
+#include "PhysxManager.h"
 #include "EditorRegistry.h"
 #include "StringHelper.h"
 
@@ -28,6 +29,8 @@ using namespace MMMEngine::Utility;
 #include "PlayerBuildWindow.h"
 #include "SceneNameWindow.h"
 #include "SceneChangeWindow.h"
+#include "AssimpLoaderWindow.h"
+#include "FontImporterWindow.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -391,7 +394,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                 {
                     ScriptBuildWindow::Get().StartBuild();
                 }
-                if (ImGui::MenuItem(u8"프로젝트 빌드"))
+                if (ImGui::MenuItem(u8"플레이어 빌드"))
                 {
                     g_editor_window_playerBuild = true;
 					p_open = false;
@@ -400,6 +403,16 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                 if (ImGui::MenuItem(u8"물리 설정"))
                 {
                     g_editor_window_physicsSettings = true;
+                    p_open = false;
+                }
+                if (ImGui::MenuItem(u8"Assimp 로더"))
+                {
+                    g_editor_window_assimpLoader = true;
+                    p_open = false;
+                }
+                if (ImGui::MenuItem(u8"Font 임포터"))
+                {
+                    g_editor_window_fontImporter = true;
                     p_open = false;
                 }
                 ImGui::EndMenu();
@@ -507,6 +520,7 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
                 {
 					g_editor_scene_before_play_sceneID = SceneManager::Get().GetCurrentScene().id;
                     SceneManager::Get().ReloadSnapShotCurrentScene();
+                    PhysxManager::Get().SyncRigidsFromTransforms();
                 }
                 else
                 {
@@ -727,6 +741,8 @@ void MMMEngine::Editor::ImGuiEditorContext::Render()
     SceneViewWindow::Get().Render();
     PhysicsSettingsWindow::Get().Render();
     PlayerBuildWindow::Get().Render();
+    AssimpLoaderWindow::Get().Render();
+    FontImporterWindow::Get().Render();
 }
 
 void MMMEngine::Editor::ImGuiEditorContext::EndFrame()

@@ -31,6 +31,8 @@ namespace MMMEngine {
 		S_TOON = 1,
 		S_PHONG = 2,
 		S_SKYBOX = 3,
+		S_PP = 4,
+		S_END
 	};
 
 	// -- 상수 정보 만들고 스타트업, json에 같은양식으로 등록할것!! --
@@ -67,7 +69,6 @@ namespace MMMEngine {
 	struct TypeInfo {
 		ShaderType shaderType = ShaderType::S_PBR;		// 쉐이더타입
 		RenderType renderType = RenderType::R_GEOMETRY;	// 렌더타입
-		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;	// VS타입일때만 존재
 	};
 
 	struct PropertyInfo {
@@ -99,6 +100,13 @@ namespace MMMEngine {
 		ResPtr<VShader> m_pDefaultVShader;
 		ResPtr<PShader> m_pDefaultPShader;
 
+		// 풀스크린 쉐이더
+		ResPtr<VShader> m_pFullScreenVS;
+		ResPtr<PShader> m_pFullScreenPS;
+
+		// 그림자 쉐이더
+		ResPtr<PShader> m_pShadowPS;
+
 		// 쉐이더 타입정보정의 < ShaderPath, TypeInfo >
 		std::unordered_map<std::wstring, TypeInfo> m_typeInfoMap;
 
@@ -114,11 +122,15 @@ namespace MMMEngine {
 		// 상수버퍼 저장용 맵 <constantBufferName, ID3D11Buffer>
 		std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D11Buffer>> m_CBBufferMap;
 
+		// 글로벌 리소스 저장용 맵 <ShaderType, <propertyName ,PropertyValue>>
+		std::unordered_map<ShaderType, std::unordered_map<std::wstring, PropertyValue>> m_globalPropMap;
+
 		//// 텍스쳐 버퍼인덱스 주는 맵 <propertyName, index> (int == shader tN)
 		//std::unordered_map<ShaderType, std::unordered_map<std::wstring, int>> m_texPropertyMap;
 		
 		
 		void CreatePShaderReflection(std::wstring&& _filePath);
+		void ClearWorldPropertyDatas() { m_globalPropMap.clear(); }
 
 		template<typename T>
 		Microsoft::WRL::ComPtr<ID3D11Buffer> CreateConstantBuffer();
@@ -129,19 +141,33 @@ namespace MMMEngine {
 		void ShutDown();
 
 	public:
-		std::wstring GetDefaultVShader();
-		std::wstring GetDefaultPShader();
+		ResPtr<VShader> GetDefaultVShader();
+		ResPtr<PShader> GetDefaultPShader();
+		ResPtr<VShader> GetFullScreenVShader();
+		ResPtr<PShader> GetFullScreenPShader();
+		ResPtr<PShader> GetShadowPShader();
 
 		const RenderType GetRenderType(const std::wstring& _shaderPath);
 		const ShaderType GetShaderType(const std::wstring& _shaderPath);
 		const int PropertyToIdx(const ShaderType _type, const std::wstring& _propertyName, PropertyInfo* _out = nullptr) const;
-		void MMMEngine::ShaderInfo::UpdateProperty(ID3D11DeviceContext4* context,
+		void UpdateProperty(ID3D11DeviceContext4* context,
 			const ShaderType shaderType,
 			const std::wstring& propertyName,
 			const void* data);
 		void UpdateCBuffers(const ShaderType _type);
 
 		void ConvertMaterialType(const ShaderType _type, Material* _mat);
+
+		const PropertyValue& GetGlobalPropVal(const ShaderType _type, const std::wstring _propName);
+
+		void AddGlobalPropVal(const ShaderType _type, const std::wstring _propName, const PropertyValue& _value);
+		void AddAllGlobalPropVal(const std::wstring _propName, const PropertyValue& _value);
+		void SetGlobalPropVal(const ShaderType _type, const std::wstring _propName, const PropertyValue& _value);
+		void SetAllGlobalPropVal(const std::wstring _propName, const PropertyValue& _value);
+		void RemoveGlobalPropVal(const ShaderType _type, const std::wstring _propName);
+		void RemoveAllGlobalPropVal(const std::wstring _propName);
+
+		Microsoft::WRL::ComPtr<ID3D11InputLayout> CreateVShaderLayout(ID3D10Blob* _blob);
 	};
 
 	template<typename T>

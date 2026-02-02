@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -179,6 +179,8 @@
     <ClInclude Include="BGMComponent.h" />
     <ClInclude Include="Behaviour.h" />
     <ClInclude Include="BoxColliderComponent.h" />
+    <ClInclude Include="Button.h" />
+    <ClInclude Include="Canvas.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CapsuleColliderComponent.h" />
     <ClInclude Include="ColliderComponent.h" />
@@ -188,6 +190,12 @@
     <ClInclude Include="DisplayMode.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="ExportSingleton.hpp" />
+    <ClInclude Include="Font.h" />
+    <ClInclude Include="Graphic.h" />
+    <ClInclude Include="Gage.h" />
+    <ClInclude Include="HandleGage.h" />
+    <ClInclude Include="UIEventManager.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GlobalRegistry.h" />
     <ClInclude Include="ListenerComponent.h" />
@@ -213,6 +221,7 @@
     <ClInclude Include="PhysX.h" />
     <ClInclude Include="PhysxHelper.h" />
     <ClInclude Include="PhysxManager.h" />
+    <ClInclude Include="Prefab.h" />
     <ClInclude Include="PShader.h" />
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="Renderer.h" />
@@ -239,14 +248,16 @@
     <ClInclude Include="SFX3DComponent.h" />
     <ClInclude Include="ShaderInfo.h" />
     <ClInclude Include="SkeletalMesh.h" />
-    <ClInclude Include="SkySphere.h" />
     <ClInclude Include="SoundController.h" />
+    <ClInclude Include="SkyRenderer.h" />
     <ClInclude Include="SphereColliderComponent.h" />
     <ClInclude Include="StaticMesh.h" />
+    <ClInclude Include="UserScriptMessageSignatures.h" />
     <ClInclude Include="UserScriptsCommon.h" />
     <ClInclude Include="VShader.h" />
     <ClInclude Include="Singleton.hpp" />
     <ClInclude Include="StringHelper.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
@@ -254,6 +265,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="RectTransform.h" />
     <ClInclude Include="BehaviourManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -264,12 +276,20 @@
     <ClCompile Include="BGMComponent.cpp" />
     <ClCompile Include="BehaviourManager.cpp" />
     <ClCompile Include="BoxColliderComponent.cpp" />
+    <ClCompile Include="Button.cpp" />
+    <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CapsuleColliderComponent.cpp" />
     <ClCompile Include="ColliderComponent.cpp" />
     <ClCompile Include="CollisionMatrix.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Gage.cpp" />
+    <ClCompile Include="Graphic.cpp" />
+    <ClCompile Include="HandleGage.cpp" />
+    <ClCompile Include="UIEventManager.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="GlobalRegistry.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="ListenerComponent.cpp" />
@@ -292,6 +312,7 @@
     <ClCompile Include="PhysX.cpp" />
     <ClCompile Include="PhysxHelper.cpp" />
     <ClCompile Include="PhysxManager.cpp" />
+    <ClCompile Include="Prefab.cpp" />
     <ClCompile Include="PShader.cpp" />
     <ClCompile Include="RenderCommand.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -299,6 +320,7 @@
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="RenderShared.cpp" />
     <ClCompile Include="RenderStateGuard.cpp" />
+    <ClCompile Include="RectTransform.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="ResourceSerializer.cpp" />
@@ -308,19 +330,22 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="SceneSerializer.cpp" />
+    <ClCompile Include="SerializableEvent.cpp" />
     <ClCompile Include="ScriptBehaviour.cpp" />
     <ClCompile Include="SFX2DComponent.cpp" />
     <ClCompile Include="SFX3DComponent.cpp" />
     <ClCompile Include="ShaderInfo.cpp" />
     <ClCompile Include="SkeletalMesh.cpp" />
-    <ClCompile Include="SkySphere.cpp" />
     <ClCompile Include="SoundController.cpp" />
+    <ClCompile Include="SkyRenderer.cpp" />
     <ClCompile Include="SphereColliderComponent.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="VShader.cpp" />
     <ClCompile Include="ScriptLoader.cpp" />
     <ClCompile Include="StringHelper.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="Texture2D.cpp" />
+    <ClCompile Include="UserScriptMessageSignatures.cpp" />
     <ClCompile Include="TimeManager.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -333,3 +358,5 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+
+

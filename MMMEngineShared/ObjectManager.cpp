@@ -1,4 +1,5 @@
 #include "ObjectManager.h"
+#include "SerializableEvent.h"
 
 DEFINE_SINGLETON(MMMEngine::ObjectManager)
 
@@ -50,10 +51,11 @@ void MMMEngine::ObjectManager::UpdateInternalTimer(float deltaTime)
         {
             m_pendingDestroy.push_back(id);
 
-            // ÆÄ±« Á÷Àü¿¡ destroyed »óÅÂ·Î ÀüÈ¯
+            // ï¿½Ä±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ destroyed ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½È¯
+            UnregisterObjectMUID(info.raw);
             info.raw->MarkDestroy();
 
-            // delayed¿¡¼­ Á¦°Å
+            // delayedï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             info.destroyScheduled = false;
             info.destroyRemainTime = -1.0f;
 
@@ -123,11 +125,12 @@ void MMMEngine::ObjectManager::Destroy(const ObjPtrBase& objPtr, float delayTime
     if (delayTime <= 0.0f)
     {
         m_pendingDestroy.push_back(id);
+        UnregisterObjectMUID(info.raw);
         info.raw->MarkDestroy();
         return;
     }
 
-    // Áö¿¬ ÆÄ±« ¿¹¾à (¶Ç´Â ¾Õ´ç±â±â)
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½Ä±ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ç´ï¿½ ï¿½Õ´ï¿½ï¿½ï¿½)
     if (info.destroyRemainTime < 0.0f)
     {
         info.destroyRemainTime = delayTime;
@@ -140,7 +143,7 @@ void MMMEngine::ObjectManager::Destroy(const ObjPtrBase& objPtr, float delayTime
     }
     else
     {
-        // ´õ ºü¸¥ ½Ã°£¸¸ ¹Ý¿µ
+        // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½Ý¿ï¿½
         if (delayTime < info.destroyRemainTime)
             info.destroyRemainTime = delayTime;
     }
@@ -148,15 +151,16 @@ void MMMEngine::ObjectManager::Destroy(const ObjPtrBase& objPtr, float delayTime
 
 void MMMEngine::ObjectManager::StartUp()
 {
-
+    SerializableEvent::SetResolver([](const Utility::MUID& muid) { return ObjectManager::Get().GetObjectByMUID(muid); });
+    SerializableEventT<float>::SetResolver([](const Utility::MUID& muid) { return ObjectManager::Get().GetObjectByMUID(muid); });
 }
 
 void MMMEngine::ObjectManager::ShutDown()
 {
-    // ¸ðµç °´Ã¼ Á¤¸®
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½
     DestroyScope scope;
 
-    // ÆÄ±« ¿¹¾à ¹«È¿È­
+    // ï¿½Ä±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿È­
     m_pendingDestroy.clear();
     m_delayedDestroy.clear();
 
@@ -175,9 +179,104 @@ void MMMEngine::ObjectManager::ShutDown()
     m_objectPtrInfos.clear();
     m_objectPtrInfos.shrink_to_fit();
 
-    // free id ½ºÅÃ ºñ¿ì±â
+    m_muidTable.clear();
+
+
+    // free id ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     while (!m_freePtrIDs.empty())
         m_freePtrIDs.pop();
+}
+
+void MMMEngine::ObjectManager::RegisterObjectMUID(Object* obj)
+{
+    if (!obj)
+        return;
+    if (obj->m_ptrID == UINT32_MAX)
+        return;
+
+    const Utility::MUID& muid = obj->m_muid;
+    if (muid.IsEmpty())
+        return;
+
+    m_muidTable[muid] = GetPtrFast<Object>(obj, obj->m_ptrID, obj->m_ptrGen);
+}
+
+void MMMEngine::ObjectManager::UnregisterObjectMUID(Object* obj)
+{
+    if (!obj)
+        return;
+
+    const Utility::MUID& muid = obj->m_muid;
+    if (muid.IsEmpty())
+        return;
+
+    auto it = m_muidTable.find(muid);
+    if (it == m_muidTable.end())
+        return;
+
+    Object* raw = static_cast<Object*>(it->second.GetRaw());
+    if (raw == obj)
+        m_muidTable.erase(it);
+}
+
+MMMEngine::ObjPtr<MMMEngine::Object> MMMEngine::ObjectManager::GetObjectByMUID(const Utility::MUID& muid) const
+{
+    if (muid.IsEmpty())
+        return ObjPtr<Object>();
+
+    auto it = m_muidTable.find(muid);
+    if (it == m_muidTable.end())
+    {
+        for (uint32_t i = 0; i < m_objectPtrInfos.size(); ++i)
+        {
+            const auto& info = m_objectPtrInfos[i];
+            if (!info.raw || info.raw->IsDestroyed())
+                continue;
+            if (!IsValidPtr(i, info.ptrGenerations, info.raw))
+                continue;
+            if (info.raw->m_muid == muid)
+                return ObjPtr<Object>(info.raw, i, info.ptrGenerations);
+        }
+        return ObjPtr<Object>();
+    }
+
+    return it->second;
+}
+
+MMMEngine::ObjPtr<MMMEngine::Object> MMMEngine::ObjectManager::GetObjectByMUID(const std::string& muidStr) const
+{
+    auto parsed = Utility::MUID::Parse(muidStr);
+    if (!parsed.has_value())
+        return ObjPtr<Object>();
+
+    return GetObjectByMUID(parsed.value());
+}
+
+void MMMEngine::ObjectManager::UpdateObjectMUID(Object* obj, const Utility::MUID& oldMuid, const Utility::MUID& newMuid)
+{
+    if (!obj)
+        return;
+    if (obj->m_ptrID == UINT32_MAX)
+        return;
+
+    if (oldMuid == newMuid)
+        return;
+
+    if (!oldMuid.IsEmpty())
+    {
+        auto it = m_muidTable.find(oldMuid);
+        if (it != m_muidTable.end())
+        {
+            Object* raw = static_cast<Object*>(it->second.GetRaw());
+            if (raw == obj)
+                m_muidTable.erase(it);
+        }
+    }
+
+    if (!newMuid.IsEmpty())
+    {
+        m_muidTable[newMuid] = GetPtrFast<Object>(obj, obj->m_ptrID, obj->m_ptrGen);
+    }
 }
 
 MMMEngine::ObjectManager::~ObjectManager()

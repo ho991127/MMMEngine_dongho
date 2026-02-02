@@ -4,8 +4,11 @@
 #include "StringHelper.h"
 #include "rttr/type"
 #include "Transform.h"
+#include "RectTransform.h"
 #include "ResourceManager.h"
 #include "MissingScriptBehaviour.h"
+#include "SerializableEvent.h"
+#include "ObjectManager.h"
 
 #include <fstream>
 #include <filesystem>
@@ -19,22 +22,6 @@ using namespace MMMEngine;
 using namespace rttr;
 
 std::unordered_map<std::string, rttr::variant> g_objectTable;
-
-static bool TryDecodeMsgPackToJson(const std::vector<uint8_t>& data, nlohmann::json& out)
-{
-    if (data.empty())
-        return false;
-
-    try
-    {
-        out = nlohmann::json::from_msgpack(data);
-        return true;
-    }
-    catch (...)
-    {
-        return false;
-    }
-}
 
 json SerializeVariant(const rttr::variant& var);
 json SerializeObject(const rttr::instance& obj)
@@ -137,6 +124,28 @@ json SerializeVariant(const rttr::variant& var)
             return obj->GetMUID().ToString();
         }
         return nullptr;
+    }
+
+    // SerializableEvent / SerializableEventT<float> -> 배열 { TargetMUID, MessageName }
+    if (t == type::get<MMMEngine::SerializableEvent>())
+    {
+        json arr = json::array();
+        const auto& ev = var.get_value<MMMEngine::SerializableEvent>();
+        for (const auto& call : ev.GetCalls())
+        {
+            arr.push_back({ {"TargetMUID", call.targetMUID}, {"MessageName", call.messageName} });
+        }
+        return arr;
+    }
+    if (t == type::get<MMMEngine::SerializableEventT<float>>())
+    {
+        json arr = json::array();
+        const auto& ev = var.get_value<MMMEngine::SerializableEventT<float>>();
+        for (const auto& call : ev.GetCalls())
+        {
+            arr.push_back({ {"TargetMUID", call.targetMUID}, {"MessageName", call.messageName} });
+        }
+        return arr;
     }
 
     if (t.is_associative_container())
@@ -329,13 +338,52 @@ void DeserializeVariant(rttr::variant& target, const json& j, type target_type)
     if (target_type == type::get<MMMEngine::Utility::MUID>())
     {
         std::string muidStr = j.get<std::string>();
-        target = MMMEngine::Utility::MUID::Parse(muidStr);
+        if (auto parsed = MMMEngine::Utility::MUID::Parse(muidStr); parsed.has_value())
+            target = parsed.value();
+        else
+            target = MMMEngine::Utility::MUID::Empty();
         return;
     }
 
     if (target_type == type::get<std::string>())
     {
         target = j.get<std::string>();
+        return;
+    }
+
+    // SerializableEvent / SerializableEventT<float> <- 배열 { TargetMUID, MessageName }
+    if (target_type == type::get<MMMEngine::SerializableEvent>())
+    {
+        std::vector<MMMEngine::PersistentCall> calls;
+        if (j.is_array())
+        {
+            for (const auto& item : j)
+            {
+                std::string muid = item.contains("TargetMUID") ? item["TargetMUID"].get<std::string>() : "";
+                std::string name = item.contains("MessageName") ? item["MessageName"].get<std::string>() : "";
+                calls.emplace_back(std::move(muid), std::move(name));
+            }
+        }
+        MMMEngine::SerializableEvent ev;
+        ev.SetCalls(std::move(calls));
+        target = ev;
+        return;
+    }
+    if (target_type == type::get<MMMEngine::SerializableEventT<float>>())
+    {
+        std::vector<MMMEngine::PersistentCall> calls;
+        if (j.is_array())
+        {
+            for (const auto& item : j)
+            {
+                std::string muid = item.contains("TargetMUID") ? item["TargetMUID"].get<std::string>() : "";
+                std::string name = item.contains("MessageName") ? item["MessageName"].get<std::string>() : "";
+                calls.emplace_back(std::move(muid), std::move(name));
+            }
+        }
+        MMMEngine::SerializableEventT<float> ev;
+        ev.SetCalls(std::move(calls));
+        target = ev;
         return;
     }
 
@@ -483,25 +531,35 @@ void DeserializeVariant(rttr::variant& target, const json& j, type target_type)
     DeserializeObject(target, j);
 }
 
-void DeserializeComponent(const json& compJson, ObjPtr<GameObject> obj)
+struct PendingComponentProps
 {
-    std::string typeName = compJson["Type"].get<std::string>();
+    ObjPtr<Component> comp;
+    const json* props = nullptr;
+};
 
+ObjPtr<Component> CreateComponentForDeserialize(const json& compJson, ObjPtr<GameObject> obj, bool& outIsMissing)
+{
+    outIsMissing = false;
+
+    if (!compJson.contains("Type"))
+        return {};
+
+    std::string typeName = compJson["Type"].get<std::string>();
     type compType = type::get_by_name(typeName);
+
+    const json* propsPtr = compJson.contains("Props") ? &compJson["Props"] : nullptr;
 
     if (!compType.is_valid())
     {
-        const json& props = compJson["Props"];
         compType = rttr::type::get<MissingScriptBehaviour>();
 
-        // 이게 터진거면 Missing 스크립트 소스가 잘못된 것
-        auto compVar = obj->AddComponent(compType); // ObjPtr<Component> variant 반환한다고 가정
+        auto compVar = obj->AddComponent(compType);
         if (!compVar.IsValid())
-            return;
+            return {};
 
-        if (props.contains("MUID"))
+        if (propsPtr && propsPtr->contains("MUID"))
         {
-            std::string muid = props["MUID"].get<std::string>();
+            std::string muid = (*propsPtr)["MUID"].get<std::string>();
             g_objectTable[muid] = ObjPtr<Object>(compVar);
         }
 
@@ -509,31 +567,32 @@ void DeserializeComponent(const json& compJson, ObjPtr<GameObject> obj)
         if (missing.IsValid())
         {
             missing->SetOriginalTypeName(typeName);
-            std::vector<uint8_t> packed = json::to_msgpack(props);
-            missing->SetOriginalPropsMsgPack(std::move(packed));
+            if (propsPtr)
+            {
+                std::vector<uint8_t> packed = json::to_msgpack(*propsPtr);
+                missing->SetOriginalPropsMsgPack(std::move(packed));
+            }
         }
 
-        // ❗ Missing엔 실제 프로퍼티가 없으니 DeserializeObject 돌리지 않음(데이터 손실 방지)
-        return;
+        outIsMissing = true;
+        return compVar;
     }
 
     auto comp = obj->AddComponent(compType);
-    // Component의 MUID를 먼저 테이블에 등록
-    const json& props = compJson["Props"];
-    if (props.contains("MUID"))
+    if (!comp.IsValid())
+        return {};
+
+    if (propsPtr && propsPtr->contains("MUID"))
     {
-        std::string muid = props["MUID"].get<std::string>();
+        std::string muid = (*propsPtr)["MUID"].get<std::string>();
         g_objectTable[muid] = ObjPtr<Object>(comp);
     }
 
-    // 속성 복원 (ObjPtr도 바로 처리됨)
-    DeserializeObject(*comp, props);
+    return comp;
 }
 
-void DeserializeTransform(Transform& tr, const json& j)
+void DeserializeTransform(Transform& tr, const json& j, const type& t)
 {
-    type t = type::get<Transform>();
-
     for (auto& prop : t.get_properties(
         rttr::filter_item::instance_item |
         rttr::filter_item::public_access |
@@ -555,15 +614,41 @@ void DeserializeTransform(Transform& tr, const json& j)
     }
 }
 
-static const json* FindTransformComp(const json& components)
+struct TransformCompInfo
 {
+    const json* comp = nullptr;
+    bool isRect = false;
+};
+
+static TransformCompInfo FindTransformComp(const json& components)
+{
+    TransformCompInfo info;
+
     for (const auto& c : components)
     {
         if (!c.contains("Type")) continue;
         std::string t = c["Type"].get<std::string>();
-        if (t == "Transform") return &c;
+        if (t == "RectTransform")
+        {
+            info.comp = &c;
+            info.isRect = true;
+            return info;
+        }
     }
-    return nullptr;
+
+    for (const auto& c : components)
+    {
+        if (!c.contains("Type")) continue;
+        std::string t = c["Type"].get<std::string>();
+        if (t == "Transform")
+        {
+            info.comp = &c;
+            info.isRect = false;
+            return info;
+        }
+    }
+
+    return info;
 }
 
 void MMMEngine::SceneSerializer::Deserialize(Scene& scene, const SnapShot& snapshot)
@@ -608,11 +693,14 @@ void MMMEngine::SceneSerializer::Deserialize(Scene& scene, const SnapShot& snaps
         // todo : 여기서 RectTransform도 같이 찾기 -> 분기 생성
         // Transform json 찾기
         const json& components = goJson["Components"];
-        const json* trComp = FindTransformComp(components);
-        if (!trComp || !trComp->contains("Props"))
+        TransformCompInfo trCompInfo = FindTransformComp(components);
+        if (!trCompInfo.comp || !trCompInfo.comp->contains("Props"))
             continue; // 또는 throw
 
-        const json& trProps = (*trComp)["Props"];
+        const json& trProps = (*trCompInfo.comp)["Props"];
+
+        if (trCompInfo.isRect)
+            go->EnsureRectTransform();
 
         // 기존 Transform 가져오기
         auto tr = go->GetTransform();
@@ -625,14 +713,19 @@ void MMMEngine::SceneSerializer::Deserialize(Scene& scene, const SnapShot& snaps
         g_objectTable[trMUID] = ObjPtr<Object>(tr);
 
         // Transform 값 복원 (Parent/MUID는 스킵)
-        DeserializeTransform(*tr, trProps);
+        auto trType = trCompInfo.isRect ? type::get<RectTransform>() : type::get<Transform>();
+        DeserializeTransform(*tr, trProps, trType);
 
         // Parent는 나중에
         if (trProps.contains("Parent") && !trProps["Parent"].is_null())
             pendingParent[trMUID] = trProps["Parent"].get<std::string>();
     }
 
-    // 2-pass: 일반 컴포넌트 생성/복원 (Transform은 제외 + RectTransform도 제외)
+    std::vector<PendingComponentProps> pendingComponentProps;
+
+    // 2-pass: 일반 컴포넌트 생성 + MUID 등록 (Transform은 제외)
+    //         주의: Collider는 Initialize 시 자동으로 RigidBody를 만들 수 있으므로
+    //         RigidBody를 먼저 생성해 중복/파괴를 방지한다.
     for (const auto& goJson : gameObjects)
     {
         std::string goMUID = goJson["MUID"].get<std::string>();
@@ -640,19 +733,70 @@ void MMMEngine::SceneSerializer::Deserialize(Scene& scene, const SnapShot& snaps
         if (itGo == g_objectTable.end()) continue;
 
         ObjPtr<GameObject> go = itGo->second.get_value<ObjPtr<GameObject>>();
-
         const json& components = goJson["Components"];
+
+        // 2-1) RigidBodyComponent 선 생성
         for (const auto& compJson : components)
         {
-            std::string typeName = compJson["Type"].get<std::string>();
-            if (typeName == "Transform") // 정확 일치로 스킵 권장
+            if (!compJson.contains("Type"))
                 continue;
 
-            DeserializeComponent(compJson, go);
+            std::string typeName = compJson["Type"].get<std::string>();
+            if (typeName != "RigidBodyComponent")
+                continue;
+
+            bool isMissing = false;
+            ObjPtr<Component> comp = CreateComponentForDeserialize(compJson, go, isMissing);
+            if (!comp.IsValid())
+                continue;
+
+            if (!isMissing && compJson.contains("Props"))
+            {
+                PendingComponentProps pending;
+                pending.comp = comp;
+                pending.props = &compJson["Props"];
+                pendingComponentProps.push_back(std::move(pending));
+            }
+        }
+
+        // 2-2) 나머지 컴포넌트 생성
+        for (const auto& compJson : components)
+        {
+            if (!compJson.contains("Type"))
+                continue;
+
+            std::string typeName = compJson["Type"].get<std::string>();
+            if (typeName == "Transform" || typeName == "RectTransform" || typeName == "RigidBodyComponent")
+                continue;
+
+            bool isMissing = false;
+            ObjPtr<Component> comp = CreateComponentForDeserialize(compJson, go, isMissing);
+            if (!comp.IsValid())
+                continue;
+
+            if (!isMissing && compJson.contains("Props"))
+            {
+                PendingComponentProps pending;
+                pending.comp = comp;
+                pending.props = &compJson["Props"];
+                pendingComponentProps.push_back(std::move(pending));
+            }
         }
     }
 
-    // 3-pass: Parent 연결 (Transform MUID 기준)
+    // 3-pass: 일반 컴포넌트 프로퍼티 복원 (모든 ObjPtr이 테이블에 등록된 뒤)
+    for (auto& pending : pendingComponentProps)
+    {
+        if (!pending.comp.IsValid() || pending.comp->IsDestroyed())
+            continue;
+
+        if (!pending.props)
+            continue;
+
+        DeserializeObject(*pending.comp, *pending.props);
+    }
+
+    // 4-pass: Parent 연결 (Transform MUID 기준)
     for (auto& [childTrMUID, parentTrMUID] : pendingParent)
     {
         auto itChild = g_objectTable.find(childTrMUID);
@@ -665,6 +809,10 @@ void MMMEngine::SceneSerializer::Deserialize(Scene& scene, const SnapShot& snaps
         auto parentTr = itParent->second.get_value<ObjPtr<Transform>>();
         childTr->SetParent(parentTr, false);
     }
+
+    // SerializableEvent 리졸버는 ObjectManager의 MUID 테이블을 사용한다.
+    SerializableEvent::SetResolver([](const Utility::MUID& muid) { return ObjectManager::Get().GetObjectByMUID(muid); });
+    SerializableEventT<float>::SetResolver([](const Utility::MUID& muid) { return ObjectManager::Get().GetObjectByMUID(muid); });
 
     g_objectTable.clear();
 }

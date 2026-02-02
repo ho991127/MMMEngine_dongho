@@ -6,9 +6,14 @@
 #include <cassert>
 
 #include "Export.h"
+#include "ResourceManager.h"
 
 namespace MMMEngine
 {
+    class GameObject;
+    class Component;
+    class Prefab;
+
     class MMMENGINE_API Object
 	{
 	private:
@@ -36,7 +41,7 @@ namespace MMMEngine
 		bool			m_isDestroyed = false;
 
         inline void		MarkDestroy() { if (m_isDestroyed) return; m_isDestroyed = true; Dispose();  }
-		inline void		SetMUID(const Utility::MUID& muid) { m_muid = muid; }
+		void            SetMUID (const Utility::MUID& muid);
 	protected:
         Object();
         virtual ~Object();
@@ -58,6 +63,13 @@ namespace MMMEngine
 
         template<typename T>
         static std::vector<ObjPtr<T>> FindObjectsByType();
+
+        static ObjPtr<GameObject> Instantiate(const ObjPtr<GameObject>& original);
+        static ObjPtr<Component> Instantiate(const ObjPtr<Component>& original);
+        static ObjPtr<GameObject> Instantiate(const ResPtr<Prefab>& prefab);
+
+        template<typename T>
+        static ObjPtr<T> Instantiate(const ObjPtr<T>& original);
 
         static void DontDestroyOnLoad(const ObjPtrBase& objPtr);
 
@@ -109,6 +121,8 @@ namespace MMMEngine
         friend class ObjectManager;
         friend class ObjectSerializer;
         friend class PhysxManager;
+        friend class JoinColliderInfo;
+
         template<typename> friend class ObjPtr;
 
         T*          m_raw               = nullptr;

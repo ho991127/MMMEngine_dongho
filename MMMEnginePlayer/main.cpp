@@ -1,4 +1,4 @@
-﻿#define NOMINMAX
+#define NOMINMAX
 #include <iostream>
 
 #include "GlobalRegistry.h"
@@ -6,6 +6,7 @@
 #include "App.h"
 
 #include "InputManager.h"
+#include "UIEventManager.h"
 #include "ResourceManager.h"
 #include "TimeManager.h"
 #include "RenderManager.h"
@@ -28,12 +29,13 @@ void Initialize()
 
 	fs::path dataPath = cwd / "Data";
 
-	SetConsoleOutputCP(CP_UTF8);
+	//SetConsoleOutputCP(CP_UTF8);
 	auto app = GlobalRegistry::g_pApp;
 	auto hwnd = app->GetWindowHandle();
 	auto windowInfo = app->GetWindowInfo();
 
 	RenderManager::Get().StartUp(hwnd, windowInfo.width, windowInfo.height);
+	RenderManager::Get().UseBackBufferDraw(true);
 	InputManager::Get().StartUp(hwnd);
 	app->OnWindowSizeChanged.AddListener<InputManager, &InputManager::HandleWindowResize>(&InputManager::Get());
 	app->OnMouseWheelUpdate.AddListener<InputManager, &InputManager::HandleMouseWheelEvent>(&InputManager::Get());
@@ -56,7 +58,8 @@ void Initialize()
 	ShaderInfo::Get().StartUp();
 
 	app->OnWindowSizeChanged.AddListener<RenderManager, &RenderManager::ResizeSwapChainSize>(&RenderManager::Get());
-	app->OnWindowSizeChanged.AddListenerLambda([](int width, int height) { RenderManager::Get().ResizeSceneSize(width, height, width, height); });
+	//app->OnWindowSizeChanged.AddListener<RenderManager, &RenderManager::ResizeSceneSize>(&RenderManager::Get());
+	RenderManager::Get().ResizeSceneSize(1920, 1080);
 
 	ComPtr<ID3D11Device> device = RenderManager::Get().GetDevice();
 	ComPtr<ID3D11DeviceContext> context = RenderManager::Get().GetContext();
@@ -72,6 +75,8 @@ void Update()
 {
 	TimeManager::Get().BeginFrame();
 	InputManager::Get().Update();
+	UIEventManager::Get().UpdateFromClientPointer(InputManager::Get().GetMousePos(),
+		InputManager::Get().GetKey(KeyCode::MouseLeft));
 
 	float dt = TimeManager::Get().GetDeltaTime();
 	if (SceneManager::Get().CheckSceneIsChanged())
@@ -87,6 +92,7 @@ void Update()
 
 	TimeManager::Get().ConsumeFixedSteps([&](float fixedDt)
 		{
+			PhysxManager::Get().SetStep();
 			BehaviourManager::Get().BroadCastBehaviourMessage("FixedUpdate");
 			PhysxManager::Get().StepFixed(fixedDt);
 
@@ -136,6 +142,8 @@ void Update()
 	BehaviourManager::Get().BroadCastBehaviourMessage("Update");
 	BehaviourManager::Get().BroadCastBehaviourMessage("LateUpdate");
 
+	PhysxManager::Get().ApplyInterpolation(TimeManager::Get().GetInterpolationAlpha());
+
 	RenderManager::Get().BeginFrame();
 	RenderManager::Get().Render();
 	RenderManager::Get().EndFrame();
@@ -173,3 +181,4 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	app.OnRelease.AddListener<&Release>();
 	app.Run();
 }
+

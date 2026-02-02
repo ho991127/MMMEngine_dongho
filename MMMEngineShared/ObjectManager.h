@@ -1,10 +1,12 @@
-﻿#pragma once
+#pragma once
 #include "Export.h"
 #include "ExportSingleton.hpp"
 #include "Object.h"
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <unordered_map>
+#include <string>
 
 namespace MMMEngine
 {
@@ -26,6 +28,10 @@ namespace MMMEngine
 
         std::vector<uint32_t> m_delayedDestroy;   //파괴 예약 ID
         std::vector<uint32_t> m_pendingDestroy;   //완전 파괴 ID
+        std::unordered_map<Utility::MUID, ObjPtr<Object>, Utility::MUID::Hash> m_muidTable;
+
+        void RegisterObjectMUID(Object* obj);
+        void UnregisterObjectMUID(Object* obj);
 
     public:
         static bool IsCreatingObject();
@@ -47,6 +53,9 @@ namespace MMMEngine
         };
 
         bool IsValidPtr(uint32_t ptrID, uint32_t generation, const void* ptr) const;
+
+        ObjPtr<Object> GetObjectByMUID(const Utility::MUID& muid) const;
+        ObjPtr<Object> GetObjectByMUID(const std::string& muidStr) const;
 
         // SelfPtr<T>의 빠른 구현을 위한 함수, 절대 외부 호출하지 말 것
         template<typename T>
@@ -160,6 +169,8 @@ namespace MMMEngine
             baseObj->m_ptrID = ptrID;
             baseObj->m_ptrGen = ptrGen;
 
+            RegisterObjectMUID(baseObj);
+
             newObj->Construct();
             return ObjPtr<T>(newObj, ptrID, ptrGen);
         }
@@ -171,6 +182,8 @@ namespace MMMEngine
 
         void UpdateInternalTimer(float deltaTime);
         void ProcessPendingDestroy();
+
+        void UpdateObjectMUID(Object* obj, const Utility::MUID& oldMuid, const Utility::MUID& newMuid);
 
         ObjectManager() = default;
         ~ObjectManager();

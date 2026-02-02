@@ -6,6 +6,7 @@
 #include "GameObject.h"
 #include "PhysxManager.h"
 #include "PhysX.h"
+#include <algorithm>
 
 RTTR_REGISTRATION
 {
@@ -20,7 +21,16 @@ RTTR_REGISTRATION
 		.property("AngularDamping", &RigidBodyComponent::GetAngularDamping , &RigidBodyComponent::SetAngularDamping)
 		.property("UseGravity", &RigidBodyComponent::GetUseGravity , &RigidBodyComponent::SetUseGravity)
 		.property("IsKinematic", &RigidBodyComponent::GetKinematic , &RigidBodyComponent::SetKinematic)
-		;
+		.property("CollisionMode", &RigidBodyComponent::GetCollisionMode , &RigidBodyComponent::SetCollisionMode)
+		.property("Interpolation", &RigidBodyComponent::GetInterpolationMode , &RigidBodyComponent::SetInterpolationMode)
+		.property("LockPosX", &RigidBodyComponent::GetLockPosX , &RigidBodyComponent::SetLockPosX)
+		.property("LockPosY", &RigidBodyComponent::GetLockPosY , &RigidBodyComponent::SetLockPosY)
+		.property("LockPosZ", &RigidBodyComponent::GetLockPosZ , &RigidBodyComponent::SetLockPosZ)
+		.property("LockRotX", &RigidBodyComponent::GetLockRotX , &RigidBodyComponent::SetLockRotX)
+		.property("LockRotY", &RigidBodyComponent::GetLockRotY , &RigidBodyComponent::SetLockRotY)
+		.property("LockRotZ", &RigidBodyComponent::GetLockRotZ , &RigidBodyComponent::SetLockRotZ)
+		.property("SolverPositionIters", &RigidBodyComponent::GetSolverPositionIters , &RigidBodyComponent::SetSolverPositionIters)
+		.property("SolverVelocityIters", &RigidBodyComponent::GetSolverVelocityIters , &RigidBodyComponent::SetSolverVelocityIters);
 
 	registration::class_<ObjPtr<RigidBodyComponent>>("ObjPtr<RigidBodyComponent>")
 		.constructor(
@@ -32,14 +42,34 @@ RTTR_REGISTRATION
 		(
 			rttr::value("Dynamic", RigidBodyComponent::Type::Dynamic),
 			rttr::value("Static", RigidBodyComponent::Type::Static)
-			);
+		);
+	registration::enumeration<RigidBodyComponent::CollisionDetectionMode>("RigidCollisionMode")
+		(
+			rttr::value("Discrete", RigidBodyComponent::CollisionDetectionMode::Discrete),
+			rttr::value("Continuous", RigidBodyComponent::CollisionDetectionMode::Continuous)
+		);
+	registration::enumeration<RigidBodyComponent::InterpolationMode>("RigidInterpolationMode")
+		(
+			rttr::value("None", RigidBodyComponent::InterpolationMode::None),
+			rttr::value("Interpolate", RigidBodyComponent::InterpolationMode::Interpolate)
+		);
 	registration::class_<RigidBodyComponent::Desc>("RigidDesc")
 		.property("Type", &RigidBodyComponent::Desc::type)
 		.property("Mass", &RigidBodyComponent::Desc::mass)
 		.property("LinearDamping", &RigidBodyComponent::Desc::linearDamping)
 		.property("AngularDamping", &RigidBodyComponent::Desc::angularDamping)
 		.property("UseGravity", &RigidBodyComponent::Desc::useGravity)
-		.property("IsKinematic", &RigidBodyComponent::Desc::isKinematic);
+		.property("IsKinematic", &RigidBodyComponent::Desc::isKinematic)
+		.property("CollisionMode", &RigidBodyComponent::Desc::collisionMode)
+		.property("Interpolation", &RigidBodyComponent::Desc::interpolation)
+		.property("LockPosX", &RigidBodyComponent::Desc::lockPosX)
+		.property("LockPosY", &RigidBodyComponent::Desc::lockPosY)
+		.property("LockPosZ", &RigidBodyComponent::Desc::lockPosZ)
+		.property("LockRotX", &RigidBodyComponent::Desc::lockRotX)
+		.property("LockRotY", &RigidBodyComponent::Desc::lockRotY)
+		.property("LockRotZ", &RigidBodyComponent::Desc::lockRotZ)
+		.property("SolverPositionIters", &RigidBodyComponent::Desc::solverPositionIters)
+		.property("SolverVelocityIters", &RigidBodyComponent::Desc::solverVelocityIters);
 }
 
 void MMMEngine::RigidBodyComponent::CreateActor(physx::PxPhysics* physics, Vector3 worldPos, Quaternion Quater)
@@ -66,7 +96,12 @@ void MMMEngine::RigidBodyComponent::CreateActor(physx::PxPhysics* physics, Vecto
 		if (m_Desc.isKinematic) {
 			t_dynamic->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, true);
 		}
+		t_dynamic->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD,
+			m_Desc.collisionMode == CollisionDetectionMode::Continuous);
+		ApplyLockFlags(t_dynamic);
+		t_dynamic->setSolverIterationCounts(m_Desc.solverPositionIters, m_Desc.solverVelocityIters);
 	}
+
 
 	for (auto* t_collider : m_Colliders)
 	{
@@ -74,9 +109,8 @@ void MMMEngine::RigidBodyComponent::CreateActor(physx::PxPhysics* physics, Vecto
 			m_Actor->attachShape(*shape);
 	}
 
-	if (auto* t_dynamic = m_Actor->is<physx::PxRigidDynamic>()) {
-		physx::PxRigidBodyExt::updateMassAndInertia(*t_dynamic, m_Desc.mass);
-	}
+	MarkMassDirty();
+	SyncInterpolationPose(worldPos, Quater);
 
 	m_Actor->userData = this;
 }
@@ -88,11 +122,9 @@ void MMMEngine::RigidBodyComponent::Initialize()
 	if (it >= 2)
 	{
 		std::cout << u8"이미 존재하는 RigidComponent" << std::endl;
-		Destroy(SelfPtr(this));
+	Destroy(SelfPtr(this));
 		return;
 	}
-	m_Desc = { MMMEngine::RigidBodyComponent::Type::Dynamic, 1.0f, 0.05f, 0.0f, true, false };
-
 	
 	//auto TransTarget = GetGameObject()->GetTransform();
 	//TransTarget->onMatrixUpdate.AddListener<RigidBodyComponent, &RigidBodyComponent::BindTeleport>(this);
@@ -142,31 +174,16 @@ void MMMEngine::RigidBodyComponent::AttachCollider(ColliderComponent* collider)
 
 	if (!m_Actor) return;
 
-	if (auto* shape = collider->GetPxShape())
-		m_Actor->attachShape(*shape);
+	collider->AttachShapeFromActor(m_Actor);
 
-	if (auto* d = m_Actor->is<physx::PxRigidDynamic>())
-		physx::PxRigidBodyExt::updateMassAndInertia(*d, m_Desc.mass);
+	MarkMassDirty();
 }
 
 void MMMEngine::RigidBodyComponent::DetachCollider(ColliderComponent* collider)
 {
 	if (!collider) return;
-
-	// 붙어있는 목록에서 제거
-	auto it = std::find(m_Colliders.begin(), m_Colliders.end(), collider);
-	if (it != m_Colliders.end())
-		m_Colliders.erase(it);
-
-	// actor가 있으면 PhysX shape도 detach
-	if (m_Actor)
-	{
-		if (auto* shape = collider->GetPxShape())
-			m_Actor->detachShape(*shape);
-
-		if (auto* d = m_Actor->is<physx::PxRigidDynamic>())
-			physx::PxRigidBodyExt::updateMassAndInertia(*d, m_Desc.mass);
-	}
+	collider->DetachShapeFromActor();
+	EraseOne(m_Colliders, collider);
 }
 
 void MMMEngine::RigidBodyComponent::DestroyActor()
@@ -211,8 +228,22 @@ void MMMEngine::RigidBodyComponent::PullFromPhysics()
 	// PhysX -> Engine Transform
 	const physx::PxTransform pxPose = t_dynamic->getGlobalPose();
 
-	GetTransform()->SetWorldPosition(ToVec(pxPose.p));
-	GetTransform()->SetWorldRotation(ToQuat(pxPose.q));
+	Vector3 pos = ToVec(pxPose.p);
+	Quaternion rot = ToQuat(pxPose.q);
+
+	if (!m_InterpInitialized)
+	{
+		SyncInterpolationPose(pos, rot);
+	}
+	else
+	{
+		m_InterpPrev = m_InterpCurr;
+		m_InterpCurr.position = pos;
+		m_InterpCurr.rotation = rot;
+	}
+
+	GetTransform()->SetWorldPosition(pos);
+	GetTransform()->SetWorldRotation(rot);
 
 }
 
@@ -303,6 +334,7 @@ void MMMEngine::RigidBodyComponent::Teleport(const Vector3& worldPos, const Quat
 	m_RequestedWorldPose.rotation = Quater;
 	m_PoseDirty = true;
 	m_WakeRequested = true;
+	SyncInterpolationPose(worldPos, Quater);
 }
 
 void MMMEngine::RigidBodyComponent::SetKinematicTarget(const Vector3& worldPos, const Quaternion& Quater)
@@ -344,6 +376,7 @@ void MMMEngine::RigidBodyComponent::Editor_changeTrans(const Vector3& worldPos, 
 
 	m_PoseDirty = true;
 	m_WakeRequested = true;
+	SyncInterpolationPose(worldPos, Quater);
 }
 
 void MMMEngine::RigidBodyComponent::AddForce(Vector3 f, ForceMode mod)
@@ -379,6 +412,10 @@ void MMMEngine::RigidBodyComponent::PushStateChanges()
 		t_dynamic->setLinearDamping(m_Desc.linearDamping);
 		t_dynamic->setAngularDamping(m_Desc.angularDamping);
 		t_dynamic->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, m_Desc.isKinematic);
+		t_dynamic->setRigidBodyFlag(physx::PxRigidBodyFlag::eENABLE_CCD,
+			m_Desc.collisionMode == CollisionDetectionMode::Continuous);
+		ApplyLockFlags(t_dynamic);
+		t_dynamic->setSolverIterationCounts(m_Desc.solverPositionIters, m_Desc.solverVelocityIters);
 		physx::PxRigidBodyExt::updateMassAndInertia(*t_dynamic, m_Desc.mass);
 	}
 
@@ -454,15 +491,15 @@ Vector3 MMMEngine::RigidBodyComponent::GetAngularVelocity() const
 	return Vector3();
 }
 
-void MMMEngine::RigidBodyComponent::SetisAutoRigid(bool value)
-{
-	m_IsAutoRigid = value;
-}
-
-bool MMMEngine::RigidBodyComponent::GetisAutoRigid()
-{
-	return m_IsAutoRigid;
-}
+//void MMMEngine::RigidBodyComponent::SetisAutoRigid(bool value)
+//{
+//	m_IsAutoRigid = value;
+//}
+//
+//bool MMMEngine::RigidBodyComponent::GetisAutoRigid()
+//{
+//	return m_IsAutoRigid;
+//}
 
 void MMMEngine::RigidBodyComponent::WakeUp()
 {
@@ -474,11 +511,11 @@ physx::PxRigidActor* MMMEngine::RigidBodyComponent::GetPxActor() const
 	return m_Actor;
 }
 
-void MMMEngine::RigidBodyComponent::AttachShapeOnly(physx::PxShape* shape)
-{
-	if (!m_Actor || !shape) return;
-	m_Actor->attachShape(*shape);
-}
+//void MMMEngine::RigidBodyComponent::AttachShapeOnly(physx::PxShape* shape)
+//{
+//	if (!m_Actor || !shape) return;
+//	m_Actor->attachShape(*shape);
+//}
 
 void MMMEngine::RigidBodyComponent::SetType_Internal()
 {
@@ -546,6 +583,21 @@ float MMMEngine::RigidBodyComponent::Px_GetYaw() const
 	return std::atan2(fwd.x, fwd.z);
 }
 
+void MMMEngine::RigidBodyComponent::MarkMassDirty()
+{
+	m_MassDirty = true;
+}
+
+bool MMMEngine::RigidBodyComponent::IsMassDirty() const
+{
+	return m_MassDirty;
+}
+
+void MMMEngine::RigidBodyComponent::ClearMassDirty()
+{
+	m_MassDirty = false;
+}
+
 
 
 void MMMEngine::RigidBodyComponent::BindTeleport()
@@ -553,6 +605,34 @@ void MMMEngine::RigidBodyComponent::BindTeleport()
 	auto Bind_Trans = GetGameObject();
 	auto temptrans = Bind_Trans->GetTransform();
 	SetKinematicTarget(temptrans->GetWorldPosition(), temptrans->GetWorldRotation());
+}
+
+void MMMEngine::RigidBodyComponent::ApplyInterpolation(float alpha)
+{
+	if (m_Desc.interpolation != InterpolationMode::Interpolate)
+		return;
+
+	if (m_Desc.type != Type::Dynamic)
+		return;
+
+	if (m_Desc.isKinematic)
+		return;
+
+	if (!m_InterpInitialized)
+		return;
+
+	auto tr = GetTransform();
+	if (!tr)
+		return;
+
+	alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+	Vector3 pos = Vector3::Lerp(m_InterpPrev.position, m_InterpCurr.position, alpha);
+	Quaternion rot = Quaternion::Slerp(m_InterpPrev.rotation, m_InterpCurr.rotation, alpha);
+	rot.Normalize();
+
+	tr->SetWorldPosition(pos);
+	tr->SetWorldRotation(rot);
 }
 
 //private 함수들
@@ -566,6 +646,25 @@ physx::PxForceMode::Enum MMMEngine::RigidBodyComponent::ToPxForceMode(ForceMode 
 	case ForceMode::Acceleration: return physx::PxForceMode::eACCELERATION;
 	}
 	return physx::PxForceMode::eFORCE;
+}
+
+void MMMEngine::RigidBodyComponent::ApplyLockFlags(physx::PxRigidDynamic* body)
+{
+	if (!body) return;
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_X, m_Desc.lockPosX);
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Y, m_Desc.lockPosY);
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Z, m_Desc.lockPosZ);
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, m_Desc.lockRotX);
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, m_Desc.lockRotY);
+	body->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, m_Desc.lockRotZ);
+}
+
+void MMMEngine::RigidBodyComponent::SyncInterpolationPose(const Vector3& pos, const Quaternion& rot)
+{
+	m_InterpPrev.position = pos;
+	m_InterpPrev.rotation = rot;
+	m_InterpCurr = m_InterpPrev;
+	m_InterpInitialized = true;
 }
 
 void MMMEngine::RigidBodyComponent::SetUseGravity(bool value)
@@ -620,6 +719,16 @@ void MMMEngine::RigidBodyComponent::SetType(Type newType)
 	m_RequestedType = newType;
 	m_RequestedPos = temp_Position;
 	m_RequestedRot = temp_Quarter;
+
+	// 아직 actor가 없다면 (등록 전) 바로 desc만 갱신해
+	// 이후 RegisterRigid에서 올바른 타입으로 생성되게 한다.
+	if (!m_Actor)
+	{
+		m_Desc.type = newType;
+		m_TypeChangePending = false;
+		return;
+	}
+
 	m_TypeChangePending = true;
 
 	// wake는 '나중에' 씬에 들어간 뒤에 처리되게 플래그만

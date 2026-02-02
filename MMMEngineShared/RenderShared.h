@@ -24,12 +24,15 @@ namespace MMMEngine {
 		R_PARTICLE = 6,
 		R_POSTPROCESS = 7,
 		R_UI = 8,
+		R_NONE = 9,
+		R_END
 	};
 
 	struct Render_CamBuffer {
 		DirectX::SimpleMath::Matrix mView = DirectX::SimpleMath::Matrix::Identity;			// 카메라좌표계 변환행렬
 		DirectX::SimpleMath::Matrix mProjection = DirectX::SimpleMath::Matrix::Identity;	// ndc좌표계 변환행렬
 		DirectX::SimpleMath::Vector4 camPos;
+		DirectX::SimpleMath::Matrix mInvProjection = DirectX::SimpleMath::Matrix::Identity;
 	};
 
 	struct Render_TransformBuffer

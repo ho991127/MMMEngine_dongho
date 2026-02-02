@@ -12,9 +12,57 @@ RTTR_REGISTRATION
     using namespace MMMEngine;
 
     registration::class_<ColliderComponent>("ColliderComponent")
-        (rttr::metadata("INSPECTOR", "DONT_ADD_COMP"));
+        (rttr::metadata("INSPECTOR", "DONT_ADD_COMP"))
+        .property("StaticFriction", &ColliderComponent::GetStaticFriction, &ColliderComponent::SetStaticFriction)
+        .property("DynamicFriction", &ColliderComponent::GetDynamicFriction, &ColliderComponent::SetDynamicFriction)
+        .property("Restitution", &ColliderComponent::GetRestitution, &ColliderComponent::SetRestitution);
 }
 
+
+void MMMEngine::ColliderComponent::EnsureMaterial()
+{
+	auto& physics = MMMEngine::PhysicX::Get().GetPhysics();
+	if (!m_Material)
+	{
+		m_Material = physics.createMaterial(m_StaticFriction, m_DynamicFriction, m_Restitution);
+		m_MaterialOwned = true;
+	}
+}
+
+void MMMEngine::ColliderComponent::ApplyMaterial()
+{
+	EnsureMaterial();
+	if (!m_Material) return;
+	m_Material->setStaticFriction(m_StaticFriction);
+	m_Material->setDynamicFriction(m_DynamicFriction);
+	m_Material->setRestitution(m_Restitution);
+	if (m_Shape)
+	{
+		physx::PxMaterial* mats[1] = { m_Material };
+		m_Shape->setMaterials(mats, 1);
+	}
+}
+
+void MMMEngine::ColliderComponent::SetStaticFriction(float value)
+{
+	if (value < 0.0f) value = 0.0f;
+	m_StaticFriction = value;
+	ApplyMaterial();
+}
+
+void MMMEngine::ColliderComponent::SetDynamicFriction(float value)
+{
+	if (value < 0.0f) value = 0.0f;
+	m_DynamicFriction = value;
+	ApplyMaterial();
+}
+
+void MMMEngine::ColliderComponent::SetRestitution(float value)
+{
+	if (value < 0.0f) value = 0.0f;
+	m_Restitution = value;
+	ApplyMaterial();
+}
 
 void MMMEngine::ColliderComponent::ApplySceneQueryFlag()
 {
@@ -36,10 +84,16 @@ void MMMEngine::ColliderComponent::ApplyFilterData()
     m_Shape->setQueryFilterData(m_QueryFilter);
 }
 
+void MMMEngine::ColliderComponent::SetRigidOffsetPose(const physx::PxTransform& pose)
+{
+    m_RigidOffsetPose = pose;
+    ApplyLocalPose();
+}
+
 void MMMEngine::ColliderComponent::ApplyLocalPose()
 {
     if (!m_Shape) return;
-    m_Shape->setLocalPose(m_LocalPose);
+    m_Shape->setLocalPose(m_RigidOffsetPose * m_LocalPose);
 }
 
 void MMMEngine::ColliderComponent::ApplyShapeModeFlags()
@@ -215,6 +269,51 @@ physx::PxTransform MMMEngine::ColliderComponent::GetWorldPosPx() const
     return actor->getGlobalPose() * m_Shape->getLocalPose();
 }
 
+
+void MMMEngine::ColliderComponent::SetChildValue(ObjPtr<Transform> T)
+{
+    if(T != nullptr)  Child_value = true;
+}
+
+bool MMMEngine::ColliderComponent::GetChildValue()
+{
+    return Child_value;
+}
+
+void MMMEngine::ColliderComponent::NoticeCompoundCollider(ObjPtr<Transform> preParent)
+{
+    ObjPtr<GameObject> NextParent_obj{};
+    if (preParent.IsValid())
+    {
+        NextParent_obj = preParent->GetGameObject();
+    }
+    ObjPtr<GameObject> CurParent_obj{};
+    auto CurParent = GetTransform()->GetParent();
+    if (CurParent.IsValid())
+    {
+        CurParent_obj = CurParent->GetGameObject();
+    }
+    auto Self_obj = GetGameObject();
+
+    MMMEngine::PhysxManager::Get().NotifyCompoundColliderAdded(NextParent_obj, CurParent_obj, Self_obj);
+}
+
+void MMMEngine::ColliderComponent::SetLocalShape()
+{
+    if (!m_Shape) return;
+    auto* actor = m_Shape->getActor();
+    if (!actor) return;
+
+    Vector3 goWorldPos = GetTransform()->GetWorldPosition();
+    Quaternion goWorldRot = GetTransform()->GetWorldRotation();
+    physx::PxTransform goWorldPx = ToPxTrans(goWorldPos, goWorldRot);
+
+    physx::PxTransform actorWorld = actor->getGlobalPose();
+    physx::PxTransform rigidOffset = actorWorld.getInverse() * goWorldPx;
+
+    SetRigidOffsetPose(rigidOffset);
+}
+
 void MMMEngine::ColliderComponent::SetShape(physx::PxShape* shape, bool owned)
 {
     if (m_Shape)
@@ -250,11 +349,62 @@ void MMMEngine::ColliderComponent::Initialize()
 {
 	// 
 	auto& physics = MMMEngine::PhysicX::Get().GetPhysics();
-	physx::PxMaterial* mat = MMMEngine::PhysicX::Get().GetDefaultMaterial();
+	EnsureMaterial();
+	physx::PxMaterial* mat = m_Material ? m_Material : MMMEngine::PhysicX::Get().GetDefaultMaterial();
 
 	if (mat)
 	{
 		BuildShape(&physics, mat);
 	}
 	MMMEngine::PhysxManager::Get().NotifyColliderAdded(this);
+    
+    GetGameObject()->GetTransform()->onUpdateTransformTree.AddListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
 }
+
+void MMMEngine::ColliderComponent::UnInitialize()
+{
+    if(GetGameObject().IsValid())
+    {
+        GetGameObject()->GetTransform()->onUpdateTransformTree.RemoveListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
+    }
+
+    PhysxManager::Get().NotifyColliderRemoved(this);
+    if (m_Shape)
+    {
+        if (auto* actor = m_Shape->getActor())
+            actor->detachShape(*m_Shape);
+
+        if (m_Owned)
+            m_Shape->release();
+
+        m_Shape = nullptr;
+        m_Owned = false;
+    }
+
+    if (m_Material && m_MaterialOwned)
+    {
+        m_Material->release();
+    }
+    m_Material = nullptr;
+    m_MaterialOwned = false;
+}
+
+void MMMEngine::ColliderComponent::DetachShapeFromActor()
+{
+    if (m_Shape)
+    {
+        if (auto* actor = m_Shape->getActor())
+            actor->detachShape(*m_Shape);
+    }
+}
+
+void MMMEngine::ColliderComponent::AttachShapeFromActor(physx::PxRigidActor* Actor)
+{
+
+    if (!Actor || !m_Shape) return;
+    
+    Actor->attachShape(*m_Shape);
+
+    return;
+}
+

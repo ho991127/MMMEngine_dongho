@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component.h"
 #include "rttr/type"
 
@@ -10,7 +10,7 @@ namespace MMMEngine {
 		RTTR_REGISTRATION_FRIEND
 		friend class RenderManager;
 	protected:
-		int renderIndex = -1;
+		uint32_t renderIndex = UINT32_MAX;
 		bool isEnabled = true;
 
 		virtual void Render() {}
@@ -20,6 +20,7 @@ namespace MMMEngine {
 	public:
 		bool GetEnabled() { return isEnabled; }
 		void SetEnabled(bool _val) { isEnabled = _val; }
+		uint32_t GetRenderIndex() const { return renderIndex; }
 
 		bool IsActiveAndEnabled();
 	};
