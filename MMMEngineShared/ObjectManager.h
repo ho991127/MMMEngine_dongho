@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Export.h"
 #include "ExportSingleton.hpp"
 #include "Object.h"
@@ -7,6 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <string>
+#include <filesystem>
 
 namespace MMMEngine
 {
@@ -56,6 +57,14 @@ namespace MMMEngine
 
         ObjPtr<Object> GetObjectByMUID(const Utility::MUID& muid) const;
         ObjPtr<Object> GetObjectByMUID(const std::string& muidStr) const;
+
+        void DontDestroyOnLoad(const ObjPtrBase& objPtr);
+
+        ObjPtr<GameObject> Instantiate(const ObjPtr<GameObject>& original);
+        ObjPtr<Component> Instantiate(const ObjPtr<Component>& original);
+        ObjPtr<GameObject> Instantiate(const ResPtr<Prefab>& prefab);
+        bool CreatePrefabFromGameObject(const ObjPtr<GameObject>& root,
+            const std::filesystem::path& directory);
 
         // SelfPtr<T>의 빠른 구현을 위한 함수, 절대 외부 호출하지 말 것
         template<typename T>

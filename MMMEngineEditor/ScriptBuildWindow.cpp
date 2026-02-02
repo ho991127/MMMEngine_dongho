@@ -42,7 +42,7 @@ namespace MMMEngine::Editor
             EditorRegistry::g_selectedGameObject = nullptr;
             InspectorWindow::Get().ClearCache();
 
-            RenderManager::Get().ClearAllCommands();
+            RenderManager::Get().InitCache();
 
             SceneManager::Get().ShutDown();
             ObjectManager::Get().ShutDown();

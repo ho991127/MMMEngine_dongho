@@ -370,7 +370,7 @@ void MMMEngine::PhysScene::DetachCollider(MMMEngine::RigidBodyComponent* rb, MMM
 		rb = ownerRb;;
 
 	rb->DetachCollider(col);
-	col->SetChildValue(false);
+	//col->SetChildValue(false);
 
 	auto itList = m_collidersByRigid.find(rb);
 	if (itList != m_collidersByRigid.end())
@@ -487,7 +487,8 @@ void MMMEngine::PhysScene::PushRigidsToPhysics()
 	for (auto& [col, rb] : m_ownerByCollider)
 	{
 		if (col == nullptr) continue;
-		if (!col->GetChildValue()) continue;
+		if (!col->GetGameObject().IsValid()) continue;
+		/*if (!col->GetChildValue()) continue;*/
 		col->SetLocalShape();
 	}
 
@@ -644,5 +645,40 @@ void MMMEngine::PhysScene::TransferCollider(MMMEngine::RigidBodyComponent* oldRb
 
 	// 새 rb에 attach + 필터 재적용
 	AttachCollider(newRb, col, matrix);
+}
+
+void MMMEngine::PhysScene::ForgetCollider(MMMEngine::ColliderComponent* col)
+{
+	if (!col) return;
+
+	// ownerByCollider 기준으로 정리
+	auto itOwner = m_ownerByCollider.find(col);
+	if (itOwner != m_ownerByCollider.end())
+	{
+		auto* rb = itOwner->second;
+		m_ownerByCollider.erase(itOwner);
+
+		if (rb)
+		{
+			auto itList = m_collidersByRigid.find(rb);
+			if (itList != m_collidersByRigid.end())
+			{
+				EraseOne(itList->second, col);
+				if (itList->second.empty())
+					m_collidersByRigid.erase(itList);
+			}
+		}
+		return;
+	}
+
+	// 안전장치: 혹시 ownerByCollider가 없는 경우 전체 리스트에서 제거
+	for (auto it = m_collidersByRigid.begin(); it != m_collidersByRigid.end(); )
+	{
+		EraseOne(it->second, col);
+		if (it->second.empty())
+			it = m_collidersByRigid.erase(it);
+		else
+			++it;
+	}
 }
 

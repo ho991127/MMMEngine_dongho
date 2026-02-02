@@ -15,7 +15,11 @@ RTTR_REGISTRATION
         (rttr::metadata("INSPECTOR", "DONT_ADD_COMP"))
         .property("StaticFriction", &ColliderComponent::GetStaticFriction, &ColliderComponent::SetStaticFriction)
         .property("DynamicFriction", &ColliderComponent::GetDynamicFriction, &ColliderComponent::SetDynamicFriction)
-        .property("Restitution", &ColliderComponent::GetRestitution, &ColliderComponent::SetRestitution);
+        .property("Restitution", &ColliderComponent::GetRestitution, &ColliderComponent::SetRestitution)
+        .property("SetOverLayer", &ColliderComponent::GetOverrideLayer, &ColliderComponent::SetOverrideLayer)
+            (rttr::metadata("INSPECTOR_CHAIN", "true=LayerType"))
+        .property("LayerType", &ColliderComponent::GetLayer, &ColliderComponent::SetLayer)
+            (rttr::metadata("RANGE", "0,7"));
 }
 
 
@@ -130,10 +134,13 @@ void MMMEngine::ColliderComponent::SetOverrideLayer(bool enable)
     if (m_Shape)
     {
         MarkFilterDirty();
-        
     }
 }
 
+/// <summary>
+/// 이번 프로젝트에서 
+/// </summary>
+/// <param name="layer"></param>
 void MMMEngine::ColliderComponent::SetLayer(uint32_t layer)
 {
     if (m_LayerOverride == layer) return;

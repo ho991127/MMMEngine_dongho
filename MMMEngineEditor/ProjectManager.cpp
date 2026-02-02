@@ -212,6 +212,25 @@ namespace MMMEngine::Editor
         }
 
         m_project = proj;
+
+        const fs::path projectRootDir = fs::path(m_project->rootPath);
+        EnsureUserScriptsFolders(projectRootDir);
+
+        const fs::path vcxprojPath = projectRootDir / "Source" / "UserScripts" / "UserScripts.vcxproj";
+        const fs::path slnPath = projectRootDir / "Source" / "UserScripts" / "UserScripts.sln";
+        if (!fs::exists(vcxprojPath))
+        {
+            GenerateUserScriptsProject(projectRootDir);
+        }
+        else
+        {
+            if (!fs::exists(slnPath))
+            {
+                GenerateUserScriptsSolution(projectRootDir);
+            }
+            GenerateVSCodeSettings(projectRootDir);
+        }
+
         return true;
     }
 
@@ -250,7 +269,8 @@ namespace MMMEngine::Editor
 
         // NOTE: gen.cpp가 RTTR 등록. USCRIPT_MESSAGE / USCRIPT_PROPERTY 로 생성기가 인식.
         out <<
-            R"(#include "rttr/type"
+			R"(#pragma once
+#include "rttr/type"
 #include "ScriptBehaviour.h"
 #include "UserScriptsCommon.h"
 #include <string>
@@ -347,38 +367,22 @@ void MMMEngine::ExampleBehaviour::Update()
 
         const std::string guid = MakeDeterministicProjectGuid(projectRootDir);
 
-        // EngineShared 경로: MMMENGINE_DIR 환경변수 우선
-        // MMMENGINE_DIR = 엔진 루트 (예: D:\MMMEngine)
-        const char* engineDirEnv = std::getenv("MMMENGINE_DIR");
-        std::string engineDir = engineDirEnv ? std::string(engineDirEnv) : "";
-
-        // fallback
-        std::string engineSharedInclude = R"($(ProjectDir)..\..\..\MMMEngineShared)";
-        std::string engineSharedIncludeDXTk = R"($(ProjectDir)..\..\..\MMMEngineShared\dxtk)";
-        std::string engineSharedIncludeDXTkInc = R"($(ProjectDir)..\..\..\MMMEngineShared\dxtk\inc)";
-        std::string engineSharedIncludePhysXInc = R"($(ProjectDir)..\..\..\MMMEngineShared\physx)";
-        std::string engineSharedDebugLibDir = R"($(ProjectDir)..\..\..\X64\Debug)";
-        std::string engineSharedReleaseLibDir = R"($(ProjectDir)..\..\..\X64\Release)";
-        std::string engineSharedCommonDebugLibDir = R"($(ProjectDir)..\..\..\Common\Lib\Debug)";
-        std::string engineSharedCommonReleaseLibDir = R"($(ProjectDir)..\..\..\Common\Lib\Release)";
+        // EngineShared 경로: MSBuild 매크로 사용 (MMMENGINE_DIR)
+        // MMMENGINE_DIR가 없으면 상대경로로 fallback 하도록 .vcxproj에 기본값 지정
+        std::string engineSharedInclude = R"($(MMMENGINE_DIR)\MMMEngineShared)";
+        std::string engineSharedIncludeDXTk = R"($(MMMENGINE_DIR)\MMMEngineShared\dxtk)";
+        std::string engineSharedIncludeDXTkInc = R"($(MMMENGINE_DIR)\MMMEngineShared\dxtk\inc)";
+        std::string engineSharedIncludePhysXInc = R"($(MMMENGINE_DIR)\MMMEngineShared\physx)";
+        std::string engineSharedDebugLibDir = R"($(MMMENGINE_DIR)\X64\Debug)";
+        std::string engineSharedReleaseLibDir = R"($(MMMENGINE_DIR)\X64\Release)";
+        std::string engineSharedCommonDebugLibDir = R"($(MMMENGINE_DIR)\Common\Lib\Debug)";
+        std::string engineSharedCommonReleaseLibDir = R"($(MMMENGINE_DIR)\Common\Lib\Release)";
         std::string engineSharedLibName = "MMMEngineShared.lib";
         std::string DirectXLibName = "DirectXTK.lib;DirectXTex.lib";
         std::string rttrDebugLibName = "rttr_core_d.lib";
         std::string rttrReleaseLibName = "rttr_core.lib";
         std::string physXLibsName = "PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib";
         std::string renderResourceLibs = "assimp-vc143-mt.lib;pugixml.lib;minizip.lib;zlib.lib;kubazip.lib;poly2tri.lib;draco.lib";
-
-        if (!engineDir.empty())
-        {
-            engineSharedInclude = engineDir + R"(\MMMEngineShared\)";
-            engineSharedIncludeDXTk = engineDir + R"(\MMMEngineShared\dxtk)";
-            engineSharedIncludeDXTkInc = engineDir + R"(\MMMEngineShared\dxtk\inc)";
-            engineSharedIncludePhysXInc = engineDir + R"(\MMMEngineShared\physx)";
-            engineSharedDebugLibDir = engineDir + R"(\X64\Debug)";
-            engineSharedReleaseLibDir = engineDir + R"(\X64\Release)";
-            engineSharedCommonDebugLibDir = engineDir + R"(\Common\Lib\Debug)";
-            engineSharedCommonReleaseLibDir = engineDir + R"(\Common\Lib\Release)";
-        }
 
         std::ofstream out(vcxprojPath, std::ios::binary);
         if (!out) return false;
@@ -444,6 +448,11 @@ void MMMEngine::ExampleBehaviour::Update()
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
+  <!-- MMMENGINE_DIR 기본값 (없으면 프로젝트 기준 상대경로) -->
+  <PropertyGroup>
+    <MMMENGINE_DIR Condition="'$(MMMENGINE_DIR)'==''">$(ProjectDir)..\..\..</MMMENGINE_DIR>
+  </PropertyGroup>
 
   <!--출력 고정: ProjectRoot/Binaries/Win64/UserScripts.dll-->
   <PropertyGroup>
@@ -531,6 +540,94 @@ void MMMEngine::ExampleBehaviour::Update()
         return true;
     }
 
+    bool ProjectManager::GenerateUserScriptsSolution(const fs::path& projectRootDir) const
+    {
+        const fs::path projDir = projectRootDir / "Source" / "UserScripts";
+        const fs::path slnPath = projDir / "UserScripts.sln";
+
+        const std::string projGuid = MakeDeterministicProjectGuid(projectRootDir);
+        const char* vcxprojTypeGuid = "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}";
+
+        std::ofstream out(slnPath, std::ios::binary);
+        if (!out) return false;
+
+        out <<
+            "Microsoft Visual Studio Solution File, Format Version 12.00\n"
+            "# Visual Studio Version 17\n"
+            "VisualStudioVersion = 17.0.31903.59\n"
+            "MinimumVisualStudioVersion = 10.0.40219.1\n"
+            "Project(\"" << vcxprojTypeGuid << "\") = \"UserScripts\", \"UserScripts.vcxproj\", \"" << projGuid << "\"\n"
+            "EndProject\n"
+            "Global\n"
+            "\tGlobalSection(SolutionConfigurationPlatforms) = preSolution\n"
+            "\t\tDebug|x64 = Debug|x64\n"
+            "\t\tRelease|x64 = Release|x64\n"
+            "\tEndGlobalSection\n"
+            "\tGlobalSection(ProjectConfigurationPlatforms) = postSolution\n"
+            "\t\t" << projGuid << ".Debug|x64.ActiveCfg = Debug|x64\n"
+            "\t\t" << projGuid << ".Debug|x64.Build.0 = Debug|x64\n"
+            "\t\t" << projGuid << ".Release|x64.ActiveCfg = Release|x64\n"
+            "\t\t" << projGuid << ".Release|x64.Build.0 = Release|x64\n"
+            "\tEndGlobalSection\n"
+            "EndGlobal\n";
+
+        return true;
+    }
+
+    bool ProjectManager::GenerateVSCodeSettings(const fs::path& projectRootDir) const
+    {
+        const fs::path vscodeDir = projectRootDir / ".vscode";
+        const fs::path propsPath = vscodeDir / "c_cpp_properties.json";
+
+        std::error_code ec;
+        fs::create_directories(vscodeDir, ec);
+        if (ec) return false;
+
+        json debugConfig;
+        debugConfig["name"] = "Win64-Debug";
+        debugConfig["includePath"] = json::array({
+            "${workspaceFolder}/Source/UserScripts",
+            "${workspaceFolder}/Source/UserScripts/Scripts",
+            "${workspaceFolder}/Source",
+            "${workspaceFolder}",
+            "${env:MMMENGINE_DIR}/MMMEngineShared",
+            "${env:MMMENGINE_DIR}/MMMEngineShared/dxtk",
+            "${env:MMMENGINE_DIR}/MMMEngineShared/dxtk/inc",
+            "${env:MMMENGINE_DIR}/MMMEngineShared/physx"
+        });
+        debugConfig["defines"] = json::array({
+            "WIN32",
+            "_WINDOWS",
+            "_DEBUG",
+            "RTTR_DLL",
+            "USERSCRIPTS_EXPORT"
+        });
+        debugConfig["compilerPath"] = "cl.exe";
+        debugConfig["cStandard"] = "c17";
+        debugConfig["cppStandard"] = "c++17";
+        debugConfig["intelliSenseMode"] = "windows-msvc-x64";
+
+        json releaseConfig = debugConfig;
+        releaseConfig["name"] = "Win64-Release";
+        releaseConfig["defines"] = json::array({
+            "WIN32",
+            "_WINDOWS",
+            "NDEBUG",
+            "RTTR_DLL",
+            "USERSCRIPTS_EXPORT"
+        });
+
+        json root;
+        root["configurations"] = json::array({ debugConfig, releaseConfig });
+        root["version"] = 4;
+
+        std::ofstream out(propsPath, std::ios::binary);
+        if (!out) return false;
+
+        out << root.dump(4);
+        return true;
+    }
+
     bool ProjectManager::GenerateUserScriptsProject(const fs::path& projectRootDir) const
     {
         EnsureUserScriptsFolders(projectRootDir);
@@ -540,7 +637,9 @@ void MMMEngine::ExampleBehaviour::Update()
 
         // filters는 실패해도 치명적이지 않음
         GenerateUserScriptsFilters(projectRootDir);
+        GenerateUserScriptsSolution(projectRootDir);
 
+        GenerateVSCodeSettings(projectRootDir);
         GenerateDefaultScriptIfEmpty(projectRootDir);
         return true;
     }
@@ -595,5 +694,29 @@ void MMMEngine::ExampleBehaviour::Update()
             return false;
 
         return OpenProject(lastProj);
+    }
+
+    void ProjectManager::RefreshUserScriptsIDEFiles()
+    {
+        if (!HasActiveProject())
+            return;
+
+        const fs::path projectRootDir = fs::path(GetActiveProject().rootPath);
+        EnsureUserScriptsFolders(projectRootDir);
+
+        const fs::path vcxprojPath = projectRootDir / "Source" / "UserScripts" / "UserScripts.vcxproj";
+        const fs::path slnPath = projectRootDir / "Source" / "UserScripts" / "UserScripts.sln";
+        if (!fs::exists(vcxprojPath))
+        {
+            GenerateUserScriptsProject(projectRootDir);
+            return;
+        }
+
+        if (!fs::exists(slnPath))
+        {
+            GenerateUserScriptsSolution(projectRootDir);
+        }
+
+        GenerateVSCodeSettings(projectRootDir);
     }
 }

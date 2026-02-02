@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="AnimationClip.cpp" />
@@ -147,6 +147,12 @@
     <ClCompile Include="PhysicsSettings.cpp">
       <Filter>소스 파일\Core\Physcis API</Filter>
     </ClCompile>
+    <ClCompile Include="SkinRenderer.cpp">
+      <Filter>소스 파일\Core\Render API\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Animator.cpp">
+      <Filter>소스 파일\Core\Render API\Component</Filter>
+    </ClCompile>
     <ClCompile Include="Canvas.cpp">
       <Filter>소스 파일\Core\Render API\UI</Filter>
     </ClCompile>
@@ -179,6 +185,9 @@
     </ClCompile>
     <ClCompile Include="SerializableEvent.cpp">
       <Filter>소스 파일\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimatorController.cpp">
+      <Filter>소스 파일\Core\Render API\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -232,6 +241,7 @@
     <ClInclude Include="MMMTime.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectManager.h" />
+    <ClInclude Include="ObjectSerializer.h" />
     <ClInclude Include="ResourceSerializer.h" />
     <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="SafeRelease.h" />
@@ -241,6 +251,15 @@
     <ClInclude Include="SceneSerializer.h" />
     <ClInclude Include="ScriptBehaviour.h" />
     <ClInclude Include="ScriptLoader.h" />
+    <ClInclude Include="SerializableEvent.h" />
+    <ClInclude Include="ShaderInfo.h" />
+    <ClInclude Include="SkeletalMesh.h" />
+    <ClInclude Include="SkyRenderer.h" />
+    <ClInclude Include="SphereColliderComponent.h" />
+    <ClInclude Include="StaticMesh.h" />
+    <ClInclude Include="UserScriptMessageSignatures.h" />
+    <ClInclude Include="UserScriptsCommon.h" />
+    <ClInclude Include="VShader.h" />
     <ClInclude Include="Singleton.hpp" />
     <ClInclude Include="StringHelper.h" />
     <ClInclude Include="Texture2D.h" />
@@ -448,6 +467,12 @@
     <ClInclude Include="SoundController.h">
       <Filter>헤더 파일\Core\Sound API</Filter>
     </ClInclude>
+    <ClInclude Include="SkinRenderer.h">
+      <Filter>헤더 파일\Core\Render API\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Animator.h">
+      <Filter>헤더 파일\Core\Render API\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Canvas.h">
       <Filter>헤더 파일\Core\Render API\UI</Filter>
     </ClInclude>
@@ -481,12 +506,18 @@
     <ClInclude Include="SerializableEvent.h">
       <Filter>헤더 파일\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="AnimatorController.h">
+      <Filter>헤더 파일\Core\Render API\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.h">
       <Filter>헤더 파일\Core\Object API</Filter>
     </ClInclude>
     <ClInclude Include="ObjectManager.h">
+      <Filter>헤더 파일\Core\Object API</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectSerializer.h">
       <Filter>헤더 파일\Core\Object API</Filter>
     </ClInclude>
     <ClInclude Include="Delegates.hpp">
@@ -645,6 +676,9 @@
       <Filter>소스 파일\Core</Filter>
     </ClCompile>
     <ClCompile Include="ObjectManager.cpp">
+      <Filter>소스 파일\Core\Object API</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectSerializer.cpp">
       <Filter>소스 파일\Core\Object API</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">

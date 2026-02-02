@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Object.h"
 #include "rttr/type"
 #include <vector>
@@ -17,6 +17,7 @@ namespace MMMEngine
 		friend class Object;
 		friend class Scene;
 		friend class SceneSerializer;
+		friend class ObjectSerializer;
 		friend class Component;
 		friend class Transform;
 

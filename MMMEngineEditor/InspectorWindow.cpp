@@ -22,6 +22,10 @@ using namespace DirectX;
 #include <algorithm>
 #include <optional>
 #include <iterator>
+#include <unordered_set>
+#include <cctype>
+#include <cstdint>
+#include <limits>
 
 using namespace MMMEngine;
 using namespace MMMEngine::Editor;
@@ -49,8 +53,323 @@ static void ApplyRigidBodyFromTransformIfPlaying(const ObjPtr<GameObject>& go)
         rbPtr->Editor_changeTrans(tr->GetWorldPosition(), tr->GetWorldRotation());
 }
 
+namespace
+{
+    static std::string TrimCopy(const std::string& s)
+    {
+        size_t start = 0;
+        while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start])))
+            ++start;
+        size_t end = s.size();
+        while (end > start && std::isspace(static_cast<unsigned char>(s[end - 1])))
+            --end;
+        return s.substr(start, end - start);
+    }
+
+    static std::string ToLowerCopy(std::string s)
+    {
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return s;
+    }
+
+    static std::vector<std::string> Split(const std::string& s, char delim)
+    {
+        std::vector<std::string> out;
+        std::string current;
+        for (char c : s)
+        {
+            if (c == delim)
+            {
+                out.push_back(current);
+                current.clear();
+            }
+            else
+            {
+                current.push_back(c);
+            }
+        }
+        out.push_back(current);
+        return out;
+    }
+
+    static bool TryParseDouble(const std::string& s, double& out)
+    {
+        std::string trimmed = TrimCopy(s);
+        if (trimmed.empty())
+            return false;
+        try
+        {
+            size_t idx = 0;
+            out = std::stod(trimmed, &idx);
+            return idx == trimmed.size();
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
+
+    struct NumericRange
+    {
+        bool has = false;
+        double min = 0.0;
+        double max = 0.0;
+    };
+
+    static NumericRange GetNumericRange(const rttr::property* prop, rttr::instance inst)
+    {
+        NumericRange range;
+        if (!prop || !inst.is_valid())
+            return range;
+
+        rttr::variant md = prop->get_metadata("RANGE");
+        if (!md.is_valid())
+            return range;
+
+        if (md.is_type<std::string>())
+        {
+            const std::string raw = md.get_value<std::string>();
+            std::string left;
+            std::string right;
+            size_t sep = raw.find(',');
+            if (sep != std::string::npos)
+            {
+                left = raw.substr(0, sep);
+                right = raw.substr(sep + 1);
+            }
+            else
+            {
+                sep = raw.find("..");
+                if (sep != std::string::npos)
+                {
+                    left = raw.substr(0, sep);
+                    right = raw.substr(sep + 2);
+                }
+                else
+                {
+                    return range;
+                }
+            }
+
+            if (TryParseDouble(left, range.min) && TryParseDouble(right, range.max))
+            {
+                range.has = true;
+                if (range.min > range.max)
+                    std::swap(range.min, range.max);
+            }
+            return range;
+        }
+
+        if (md.can_convert<Vector2>())
+        {
+            Vector2 v = md.get_value<Vector2>();
+            range.min = static_cast<double>(v.x);
+            range.max = static_cast<double>(v.y);
+            range.has = true;
+            if (range.min > range.max)
+                std::swap(range.min, range.max);
+            return range;
+        }
+
+        return range;
+    }
+
+    static std::string NormalizeBoolKey(const std::string& key)
+    {
+        std::string k = ToLowerCopy(TrimCopy(key));
+        if (k == "true" || k == "1" || k == "yes" || k == "on")
+            return "true";
+        if (k == "false" || k == "0" || k == "no" || k == "off")
+            return "false";
+        if (k == "*")
+            return "*";
+        return k;
+    }
+
+    struct InspectorChainMapping
+    {
+        std::unordered_map<std::string, std::vector<std::string>> valueToTargets;
+        std::unordered_set<std::string> allTargets;
+    };
+
+    static InspectorChainMapping ParseInspectorChainMapping(const std::string& raw, const std::string& defaultKey, bool normalizeBoolKeys)
+    {
+        InspectorChainMapping mapping;
+        for (const auto& entryRaw : Split(raw, ';'))
+        {
+            std::string entry = TrimCopy(entryRaw);
+            if (entry.empty())
+                continue;
+
+            std::string key;
+            std::string rhs;
+            size_t eqPos = entry.find('=');
+            if (eqPos == std::string::npos)
+            {
+                key = defaultKey;
+                rhs = entry;
+            }
+            else
+            {
+                key = TrimCopy(entry.substr(0, eqPos));
+                rhs = TrimCopy(entry.substr(eqPos + 1));
+            }
+
+            if (normalizeBoolKeys)
+                key = NormalizeBoolKey(key);
+
+            if (key.empty() || rhs.empty())
+                continue;
+
+            auto& targets = mapping.valueToTargets[key];
+            for (const auto& propRaw : Split(rhs, ','))
+            {
+                std::string propName = TrimCopy(propRaw);
+                if (propName.empty())
+                    continue;
+                targets.push_back(propName);
+                mapping.allTargets.insert(propName);
+            }
+        }
+        return mapping;
+    }
+
+    static std::unordered_set<std::string> BuildAllowedTargets(const InspectorChainMapping& mapping, const std::vector<std::string>& keys)
+    {
+        std::unordered_set<std::string> allowed;
+        auto addTargets = [&](const std::string& key)
+        {
+            auto it = mapping.valueToTargets.find(key);
+            if (it == mapping.valueToTargets.end())
+                return;
+            for (const auto& name : it->second)
+                allowed.insert(name);
+        };
+
+        addTargets("*");
+        for (const auto& key : keys)
+            addTargets(key);
+        return allowed;
+    }
+
+    static bool TryGetVariantInt64(const rttr::variant& var, int64_t& out)
+    {
+        if (!var.is_valid())
+            return false;
+        if (var.can_convert<int>())
+        {
+            out = static_cast<int64_t>(var.to_int());
+            return true;
+        }
+        if (var.can_convert<int64_t>())
+        {
+            out = var.get_value<int64_t>();
+            return true;
+        }
+        return false;
+    }
+
+    static bool IsNumericString(const std::string& s)
+    {
+        if (s.empty())
+            return false;
+        size_t i = 0;
+        if (s[0] == '-' || s[0] == '+')
+            i = 1;
+        if (i >= s.size())
+            return false;
+        for (; i < s.size(); ++i)
+        {
+            if (!std::isdigit(static_cast<unsigned char>(s[i])))
+                return false;
+        }
+        return true;
+    }
+
+    static std::unordered_map<std::string, bool> BuildInspectorChainVisibility(rttr::instance inst, const rttr::type& t)
+    {
+        std::unordered_map<std::string, bool> visibility;
+
+        for (auto& prop : t.get_properties())
+        {
+            rttr::variant md = prop.get_metadata("INSPECTOR_CHAIN");
+            if (!md.is_valid() || !md.is_type<std::string>())
+                continue;
+
+            const std::string raw = md.get_value<std::string>();
+            if (raw.empty())
+                continue;
+
+            rttr::variant controllerVar = prop.get_value(inst);
+            if (!controllerVar.is_valid())
+                continue;
+
+            const std::string controllerName = prop.get_name().to_string();
+            rttr::type controllerType = prop.get_type();
+            std::unordered_set<std::string> allowed;
+            InspectorChainMapping mapping;
+
+            if (controllerType == rttr::type::get<bool>())
+            {
+                mapping = ParseInspectorChainMapping(raw, "true", true);
+                const std::string key = controllerVar.to_bool() ? "true" : "false";
+                allowed = BuildAllowedTargets(mapping, { key });
+            }
+            else if (controllerType.is_enumeration())
+            {
+                mapping = ParseInspectorChainMapping(raw, "*", false);
+                rttr::enumeration enumType = controllerType.get_enumeration();
+                std::string currentName = enumType.value_to_name(controllerVar).to_string();
+                std::string currentLower = ToLowerCopy(currentName);
+
+                std::vector<std::string> matchedKeys;
+                for (const auto& entry : mapping.valueToTargets)
+                {
+                    const std::string& key = entry.first;
+                    if (key == "*")
+                        continue;
+                    if (key == currentName || ToLowerCopy(key) == currentLower)
+                    {
+                        matchedKeys.push_back(key);
+                        continue;
+                    }
+                    if (IsNumericString(key))
+                    {
+                        int64_t currentValue = 0;
+                        if (TryGetVariantInt64(controllerVar, currentValue))
+                        {
+                            if (std::stoll(key) == currentValue)
+                                matchedKeys.push_back(key);
+                        }
+                    }
+                }
+                allowed = BuildAllowedTargets(mapping, matchedKeys);
+            }
+            else
+            {
+                continue;
+            }
+
+            for (const auto& target : mapping.allTargets)
+            {
+                if (target == controllerName)
+                    continue;
+
+                bool allow = allowed.find(target) != allowed.end();
+                auto it = visibility.find(target);
+                if (it == visibility.end())
+                    visibility[target] = allow;
+                else
+                    it->second = it->second && allow;
+            }
+        }
+
+        return visibility;
+    }
+}
+
 /// 단순 타입(Vector2/3/4, float, int, bool, Color, enum) 그리기 및 편집. var를 갱신하고, 처리한 타입이면 true.
-/// prop/inst가 주어지면 float에 MIN/MAX 메타데이터 적용. (sequential 요소용으로는 nullptr/빈 instance 전달)
+/// prop/inst가 주어지면 숫자 타입에 RANGE 메타데이터 적용. (sequential 요소용으로는 nullptr/빈 instance 전달)
 static bool DrawSimplePropertyValue(const char* label, rttr::variant& var, rttr::type propType, bool readOnly,
     bool* outChanged, const rttr::property* prop = nullptr, rttr::instance inst = rttr::instance())
 {
@@ -60,23 +379,44 @@ static bool DrawSimplePropertyValue(const char* label, rttr::variant& var, rttr:
     if (propType == rttr::type::get<int>())
     {
         int v = var.to_int();
+        NumericRange range = GetNumericRange(prop, inst);
+        int minVal = static_cast<int>(range.min);
+        int maxVal = static_cast<int>(range.max);
         if (readOnly) ImGui::BeginDisabled(true);
-        changed = ImGui::DragInt(label, &v);
+        changed = ImGui::DragInt(label, &v, 1.0f, range.has ? minVal : 0, range.has ? maxVal : 0);
+        if (readOnly) ImGui::EndDisabled();
+        if (changed && !readOnly) var = v;
+    }
+    else if (propType == rttr::type::get<uint32_t>())
+    {
+        uint32_t v = var.to_uint32();
+        NumericRange range = GetNumericRange(prop, inst);
+        uint32_t minVal = 0;
+        uint32_t maxVal = std::numeric_limits<uint32_t>::max();
+        if (range.has)
+        {
+            double clampedMin = std::clamp(range.min, 0.0, static_cast<double>(std::numeric_limits<uint32_t>::max()));
+            double clampedMax = std::clamp(range.max, 0.0, static_cast<double>(std::numeric_limits<uint32_t>::max()));
+            minVal = static_cast<uint32_t>(clampedMin);
+            maxVal = static_cast<uint32_t>(clampedMax);
+            if (minVal > maxVal)
+                std::swap(minVal, maxVal);
+        }
+        const void* pMin = range.has ? static_cast<const void*>(&minVal) : nullptr;
+        const void* pMax = range.has ? static_cast<const void*>(&maxVal) : nullptr;
+        if (readOnly) ImGui::BeginDisabled(true);
+        changed = ImGui::DragScalar(label, ImGuiDataType_U32, &v, 1.0f, pMin, pMax, "%u");
         if (readOnly) ImGui::EndDisabled();
         if (changed && !readOnly) var = v;
     }
     else if (propType == rttr::type::get<float>())
     {
         float v = static_cast<float>(var.to_double());
-        float minVal = 0.0f, maxVal = 0.0f;
-        if (prop && inst.is_valid())
-        {
-            rttr::variant mdMin = prop->get_metadata("MIN"), mdMax = prop->get_metadata("MAX");
-            if (mdMin.is_valid() && mdMin.can_convert<float>()) minVal = mdMin.get_value<float>();
-            if (mdMax.is_valid() && mdMax.can_convert<float>()) maxVal = mdMax.get_value<float>();
-        }
+        NumericRange range = GetNumericRange(prop, inst);
+        float minVal = static_cast<float>(range.min);
+        float maxVal = static_cast<float>(range.max);
         if (readOnly) ImGui::BeginDisabled(true);
-        changed = ImGui::DragFloat(label, &v, 0.01f, minVal, maxVal);
+        changed = ImGui::DragFloat(label, &v, 0.01f, range.has ? minVal : 0.0f, range.has ? maxVal : 0.0f);
         if (readOnly) ImGui::EndDisabled();
         if (changed && !readOnly) var = v;
     }
@@ -149,6 +489,106 @@ static bool DrawSimplePropertyValue(const char* label, rttr::variant& var, rttr:
         }
         if (readOnly) ImGui::EndDisabled();
     }
+	//else if (elemType.get_name().to_string().find("shared_ptr") != std::string::npos)
+	//{
+	//	// inner type 추출
+	//	auto args = elemType.get_template_arguments();
+	//	if (args.begin() != args.end())
+	//	{
+	//		rttr::type innerType = *args.begin();
+
+	//		// Resource 계열이면 파일 경로 버튼 + 드롭
+	//		if (innerType.is_derived_from(rttr::type::get<Resource>()) || innerType == rttr::type::get<Resource>())
+	//		{
+	//			// 현재 리소스 얻기 (shared_ptr<Resource>로 뽑아내기 시도)
+	//			std::shared_ptr<Resource> sharedRes;
+
+	//			// elem이 이미 shared_ptr<Resource>면 바로
+	//			if (elem.is_type<std::shared_ptr<Resource>>())
+	//			{
+	//				sharedRes = elem.get_value<std::shared_ptr<Resource>>();
+	//			}
+	//			else
+	//			{
+	//				// 예: shared_ptr<Material> -> shared_ptr<Resource>로 convert (RTTR converter 필요)
+	//				rttr::variant tmp = elem;
+	//				if (tmp.convert(rttr::type::get<std::shared_ptr<Resource>>()))
+	//					sharedRes = tmp.get_value<std::shared_ptr<Resource>>();
+	//			}
+
+	//			Resource* res = sharedRes ? sharedRes.get() : nullptr;
+
+	//			std::string displayPath = "None";
+	//			if (res)
+	//			{
+	//				std::filesystem::path fullPath = res->GetFilePath();
+    //              fullPath = fullPath.filename();
+    //              displayPath = fullPath.string();
+	//			}
+
+	//			ImGui::Text("%s:", label);
+	//			ImGui::SameLine();
+	//			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.3f, 1.0f));
+	//			ImGui::Button(displayPath.c_str(), ImVec2(-1, 0));
+	//			ImGui::PopStyleColor();
+
+	//			// 우클릭 메뉴: 참조 해제
+	//			if (ImGui::BeginPopupContextItem("ResPtrElemContext"))
+	//			{
+	//				if (!readOnly && ImGui::MenuItem(u8"참조 해제"))
+	//				{
+	//					// innerType(shared_ptr<Material> 등)에 맞는 nullptr variant 만들기
+	//					// 가장 단순: shared_ptr<Resource> nullptr 만들고 convert
+	//					std::shared_ptr<Resource> empty = nullptr;
+	//					rttr::variant nullVar(empty);
+	//					if (nullVar.can_convert(elemType) && ConvertToType(nullVar, elemType))
+	//					{
+	//						elem = nullVar;
+	//						changed = true;
+	//					}
+	//				}
+	//				ImGui::EndPopup();
+	//			}
+
+	//			// 드롭으로 할당
+	//			if (ImGui::BeginDragDropTarget())
+	//			{
+	//				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FILE_PATH"))
+	//				{
+	//					std::string absolutePath((const char*)payload->Data, payload->DataSize - 1);
+	//					std::string ext = std::filesystem::path(absolutePath).extension().string();
+	//					std::transform(ext.begin(), ext.end(), ext.begin(),
+	//						[](unsigned char c) { return (char)std::tolower(c); });
+
+	//					// Material이면 .material만 허용
+	//					if (innerType == rttr::type::get<Material>() && ext != ".material")
+	//					{
+	//						// 무시
+	//					}
+	//					else
+	//					{
+	//						std::string relativePath = ProjectManager::Get().ToProjectRelativePath(absolutePath);
+	//						std::wstring wRelativePath = StringHelper::StringToWString(relativePath);
+
+	//						rttr::variant loaded = ResourceManager::Get().Load(innerType, wRelativePath);
+	//						if (loaded.is_valid())
+	//						{
+	//							rttr::variant converted = loaded;
+	//							if (converted.can_convert(elemType) && ConvertToType(converted, elemType))
+	//							{
+	//								elem = converted;
+	//								changed = true;
+	//							}
+	//						}
+	//					}
+	//				}
+	//				ImGui::EndDragDropTarget();
+	//			}
+
+	//			return changed;
+	//		}
+	//	}
+	//}
     else
     {
         return false; // 미지원 타입
@@ -615,6 +1055,8 @@ void MMMEngine::Editor::InspectorWindow::RenderProperties(rttr::instance inst, O
         lockRefResolution = canvasPtr->GetScaleMode() == CanvasScaleMode::ConstantPixelSize ? true : false;
     }
 
+    const std::unordered_map<std::string, bool> chainVisibility = BuildInspectorChainVisibility(inst, t);
+
     int propIndex = 0;
     for (auto& prop : t.get_properties())
     {
@@ -627,6 +1069,9 @@ void MMMEngine::Editor::InspectorWindow::RenderProperties(rttr::instance inst, O
             continue;
 
         const std::string name = prop.get_name().to_string();
+        auto chainIt = chainVisibility.find(name);
+        if (chainIt != chainVisibility.end() && !chainIt->second)
+            continue;
         bool readOnly = prop.is_readonly();
         rttr::type propType = prop.get_type();
 

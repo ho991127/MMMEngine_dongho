@@ -3,7 +3,6 @@
 #include "GameObject.h"
 #include "rttr/type"
 #include "Export.h"
-#include "GameObject.h"
 
 namespace MMMEngine
 {
