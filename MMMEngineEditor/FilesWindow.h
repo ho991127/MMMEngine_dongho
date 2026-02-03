@@ -20,8 +20,8 @@ namespace MMMEngine::Editor
 
     private:
         std::vector<std::pair<std::string, std::string>> m_moveQueue;
-        std::vector<std::string> m_fileRenderExclusions = { ".guid", ".csproj", ".vcxproj", ".filters", ".user" };
-        std::vector<std::string> m_folderRenderExclusions = { "bin", "obj", "Build", "Binaries", ".vs",".git"};
+        std::vector<std::string> m_fileRenderExclusions = { ".meta", ".csproj", ".vcxproj", ".filters", ".user", ".exp", ".lib", ".settings" };
+        std::vector<std::string> m_folderRenderExclusions = { "bin", "obj", "Build", "Binaries", ".vs",".git", ".vscode" };
 
         char m_newScriptName[256] = "";
         bool m_openCreateScriptModalRequest = false;
