@@ -31,7 +31,7 @@ namespace MMMEngine
 		};
 
 		// 콜라이더 종류별로 shape 만드는 가상함수
-		virtual void BuildShape(physx::PxPhysics* physics, physx::PxMaterial* material) = 0;
+		virtual bool BuildShape(physx::PxPhysics* physics, physx::PxMaterial* material) = 0;
 
 		void Initialize() override;
 		void UnInitialize() override;
@@ -110,6 +110,11 @@ namespace MMMEngine
 		void SetLocalShape();
 
 		void SetRigidOffsetPose(const physx::PxTransform& pose);
+
+		void SetCompoundCollider(ObjPtr<Transform> parent);
+		ObjPtr<Transform> GetCompoundCollider() { return m_parent; }
+
+		ObjPtr<Transform> m_parent;
 
 	protected:
 		// 파생 클래스가 shape 생성 후 반드시 호출
@@ -195,5 +200,12 @@ namespace MMMEngine
 		};
 
 		virtual DebugColliderShapeDesc GetDebugShapeDesc() const = 0;
+
+	protected:
+		bool m_IsRegistered = false;
+		
+		void RegisterToPhysics();
+
+		void UnregisterFromPhysics();
 	};
 }

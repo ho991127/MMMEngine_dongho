@@ -16,10 +16,20 @@ RTTR_REGISTRATION
         .property("StaticFriction", &ColliderComponent::GetStaticFriction, &ColliderComponent::SetStaticFriction)
         .property("DynamicFriction", &ColliderComponent::GetDynamicFriction, &ColliderComponent::SetDynamicFriction)
         .property("Restitution", &ColliderComponent::GetRestitution, &ColliderComponent::SetRestitution)
+        .property("Mode", &ColliderComponent::GetShapeMode, &ColliderComponent::SetShapeMode)
         .property("SetOverLayer", &ColliderComponent::GetOverrideLayer, &ColliderComponent::SetOverrideLayer)
             (rttr::metadata("INSPECTOR_CHAIN", "true=LayerType"))
         .property("LayerType", &ColliderComponent::GetLayer, &ColliderComponent::SetLayer)
             (rttr::metadata("RANGE", "0,7"));
+    registration::enumeration<ColliderComponent::ShapeMode>("ShapeMode")
+        (
+            rttr::value("Simulation", ColliderComponent::ShapeMode::Simulation),
+            rttr::value("Trigger", ColliderComponent::ShapeMode::Trigger),
+            rttr::value("QueryOnly", ColliderComponent::ShapeMode::QueryOnly),
+            rttr::value("Disabled", ColliderComponent::ShapeMode::Disabled)
+            );
+    //registration::class_<ColliderComponent::ShapeMode>("Mode")
+    //    .property("Mode", &ColliderComponent::m_Mode);
 }
 
 
@@ -31,6 +41,24 @@ void MMMEngine::ColliderComponent::EnsureMaterial()
 		m_Material = physics.createMaterial(m_StaticFriction, m_DynamicFriction, m_Restitution);
 		m_MaterialOwned = true;
 	}
+}
+
+void MMMEngine::ColliderComponent::RegisterToPhysics()
+{
+    if (m_IsRegistered || !m_Shape) return;
+    MMMEngine::PhysxManager::Get().NotifyColliderAdded(this);
+    GetGameObject()->GetTransform()->onUpdateTransformTree
+        .AddListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
+    m_IsRegistered = true;
+}
+
+void MMMEngine::ColliderComponent::UnregisterFromPhysics()
+{
+    if (!m_IsRegistered) return;
+    GetGameObject()->GetTransform()->onUpdateTransformTree
+        .RemoveListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
+    MMMEngine::PhysxManager::Get().NotifyColliderRemoved(this);
+    m_IsRegistered = false;
 }
 
 void MMMEngine::ColliderComponent::ApplyMaterial()
@@ -92,6 +120,11 @@ void MMMEngine::ColliderComponent::SetRigidOffsetPose(const physx::PxTransform& 
 {
     m_RigidOffsetPose = pose;
     ApplyLocalPose();
+}
+
+void MMMEngine::ColliderComponent::SetCompoundCollider(ObjPtr<Transform> parent)
+{
+    NoticeCompoundCollider(parent);
 }
 
 void MMMEngine::ColliderComponent::ApplyLocalPose()
@@ -361,18 +394,21 @@ void MMMEngine::ColliderComponent::Initialize()
 
 	if (mat)
 	{
-		BuildShape(&physics, mat);
+        if (!BuildShape(&physics, mat) || !m_Shape)
+        {
+            std::cout << u8"Shape 생성 실패 , BuildShape를 확인" << std::endl;
+            return;
+        }
 	}
-	MMMEngine::PhysxManager::Get().NotifyColliderAdded(this);
-    
-    GetGameObject()->GetTransform()->onUpdateTransformTree.AddListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
+
+    RegisterToPhysics();
 }
 
 void MMMEngine::ColliderComponent::UnInitialize()
 {
     if(GetGameObject().IsValid())
     {
-        GetGameObject()->GetTransform()->onUpdateTransformTree.RemoveListener<ColliderComponent, &ColliderComponent::NoticeCompoundCollider>(this);
+        UnregisterFromPhysics();
     }
 
     PhysxManager::Get().NotifyColliderRemoved(this);

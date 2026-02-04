@@ -289,7 +289,7 @@ void MMMEngine::PhysScene::AttachCollider(MMMEngine::RigidBodyComponent* rb, MMM
 	if (m_rigids.find(rb) == m_rigids.end())
 	{
 		//AttachCollider called for unregistered rigid. RegisterRigid must be called first.
-		assert(false && "actor가 미등록 상태입니다 actor를 먼저 등록하고 collider를 붙여야합니다");
+		assert(false && u8"actor가 미등록 상태입니다 actor를 먼저 등록하고 collider를 붙여야합니다");
 		return;
 	}
 
@@ -305,7 +305,7 @@ void MMMEngine::PhysScene::AttachCollider(MMMEngine::RigidBodyComponent* rb, MMM
 		else
 		{
 			//해당 collider가 다른 rb에 붙어있음
-			std::cout << "해당 collider는 다른 rb에 붙어있던 collider임 확인필요" << std::endl;
+			std::cout << u8"해당 collider는 다른 rb에 붙어있던 collider임 확인필요" << std::endl;
 			DetachCollider(itOwner->second, col);
 		}
 	}
@@ -313,7 +313,7 @@ void MMMEngine::PhysScene::AttachCollider(MMMEngine::RigidBodyComponent* rb, MMM
 	// shape 없으면 생성(또는 rebuild)
 	if (col->GetPxShape() == nullptr)
 	{
-		assert(false && "Shape가 없는 상태 로직 확인이 필요");
+		assert(false && u8"Shape가 없는 상태 로직 확인이 필요");
 	}
 
 	//if (col->GetGameObject()->GetTransform()->GetParent() != nullptr)
@@ -321,6 +321,12 @@ void MMMEngine::PhysScene::AttachCollider(MMMEngine::RigidBodyComponent* rb, MMM
 	//	col->SetChildValue(true);
 	//}
 
+
+	if (auto* meshCol = dynamic_cast<MeshColliderComponent*>(col))
+	{
+		if (!meshCol->RebuildShapeOnly(rb->GetType()))
+			return; // 실패 시 attach하지 않음
+	}
 
 
 	// 필터 적용
@@ -547,15 +553,25 @@ void MMMEngine::PhysScene::ChangeRigidType(MMMEngine::RigidBodyComponent* rb, co
 	//새 actor 생성
 	auto& physics = PhysicX::Get().GetPhysics();
 	rb->SetType_Internal();
-	rb->CreateActor(&physics, rb->GetRequestedPos(), rb->GetRequestedRot());
+	rb->CreateActor(&physics, rb->GetRequestedPos(), rb->GetRequestedRot(), false);
 
 	auto* newActor = rb->GetPxActor();
 	if (!newActor) return;
+
 
 	//콜라이더 다시 attach (컨테이너는 건드리지 말고, actor에 shape만 attach)
 	for (auto* col : cols)
 	{
 		if (!col) continue;
+
+
+		//
+		if (auto* meshCol = dynamic_cast<MeshColliderComponent*>(col))
+		{
+			if (!meshCol->RebuildShapeOnly(rb->GetType()))
+				continue; // 실패 시 이 콜라이더는 attach 안 함
+		}
+		//
 
 		auto* shape = col->GetPxShape();
 		if (!shape) continue; // 정책상 여기서 BuildShape를 할지, 그냥 스킵할지 결정
@@ -619,7 +635,7 @@ void MMMEngine::PhysScene::TransferCollider(MMMEngine::RigidBodyComponent* oldRb
 	if (!col || !newRb) return;
 	if (!newRb->GetPxActor())
 	{
-		std::cout << "Conpound 등록중 Actor 없어서 오류" << std::endl;
+		std::cout << u8"Conpound 등록중 Actor 없어서 오류" << std::endl;
 		return; // newRb는 이미 Register되어 있어야 함
 	}
 
