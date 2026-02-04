@@ -622,7 +622,7 @@ namespace MMMEngine::Editor
                 os << ";\n\n";
 
                 os << "\tregistration::class_<ObjPtr<" << s->className << ">>(\"ObjPtr<" << s->className << ">\")\n";
-                os << "\t\t.constructor([]() { return Object::NewObject<" << s->className << ">(); })\n";
+                os << "\t\t.constructor(&Object::NewObject<" << s->className << ">)\n";
                 os << "\t\t.method(\"Inject\", &ObjPtr<" << s->className << ">::Inject);\n\n";
             }
             os << "}\n";
