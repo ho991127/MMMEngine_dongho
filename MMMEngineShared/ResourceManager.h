@@ -84,7 +84,9 @@ namespace MMMEngine
 				if (auto sp = it->second.lock())
 					return std::dynamic_pointer_cast<T>(sp);
 
-				m_cache.erase(key);
+				std::weak_ptr<Resource> temp = std::move(it->second);
+
+				m_cache.erase(it);
 			}
 
 
@@ -120,7 +122,9 @@ namespace MMMEngine
 				if (auto sp = it->second.lock())
 					return rttr::variant(sp);
 
-				m_cache.erase(key);
+				std::weak_ptr<Resource> temp = std::move(it->second);
+
+				m_cache.erase(it);
 			}
 
 			rttr::variant resource = resourceType.create();
@@ -151,7 +155,9 @@ namespace MMMEngine
 				if (res_shared)
 					return true;
 
-				m_cache.erase(key);
+				std::weak_ptr<Resource> temp = std::move(resource_iter->second);
+
+				m_cache.erase(resource_iter);
 			}
 
 			return false;
