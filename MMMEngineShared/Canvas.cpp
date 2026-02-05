@@ -4,6 +4,7 @@
 #include "RenderManager.h"
 #include "rttr/registration"
 #include <algorithm>
+#include <cmath>
 
 RTTR_REGISTRATION
 {
@@ -87,6 +88,18 @@ DirectX::SimpleMath::Vector2 MMMEngine::Canvas::GetSceneOffset() const
 	return {
 		(static_cast<float>(sceneW) - scaledSize.x) * 0.5f,
 		(static_cast<float>(sceneH) - scaledSize.y) * 0.5f
+	};
+}
+
+DirectX::SimpleMath::Vector2 MMMEngine::Canvas::ScreenToCanvas(const DirectX::SimpleMath::Vector2& screenPos) const
+{
+	const auto scale = GetScaleToScene();
+	const auto offset = GetSceneOffset();
+	const float safeScaleX = (std::abs(scale.x) > 1e-6f) ? scale.x : 1.0f;
+	const float safeScaleY = (std::abs(scale.y) > 1e-6f) ? scale.y : 1.0f;
+	return {
+		(screenPos.x - offset.x) / safeScaleX,
+		(screenPos.y - offset.y) / safeScaleY
 	};
 }
 

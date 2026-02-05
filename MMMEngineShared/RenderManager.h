@@ -204,7 +204,7 @@ namespace MMMEngine
 
 		int AddLight(Light* _obj);
 		void RemoveLight(int _idx);
-		void InitCache();
+		void ClearCache();
 
 		UINT GetSceneWidth() { return m_sceneWidth; }
 		UINT GetSceneHeight() { return m_sceneHeight; }

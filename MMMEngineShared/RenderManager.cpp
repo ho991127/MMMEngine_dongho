@@ -96,11 +96,6 @@ namespace MMMEngine {
 		// TODO::인풋레이아웃 ShaderInfo 사용해 자동등록 시키기
 		_context->IASetInputLayout(_material->GetVShader()->m_pInputLayout.Get());
 
-		// TODO::샘플러 ShaderInfo 사용해 자동등록화 시키기 (UpdateProperty 사용, 프로퍼티로 샘플러 관리하기)
-		ID3D11SamplerState* samplers[] = { m_pLinearSampler.Get(), m_pCompareSampler.Get(), m_pPointSampler.Get() };
-		m_pDeviceContext->PSSetSamplers(0, 3, samplers);
-
-
 		// 메테리얼
 		for (auto& [prop, val] : _material->GetProperties()) {
 			UpdateProperty(prop, val, type);
@@ -151,7 +146,7 @@ namespace MMMEngine {
 			Mesh_BoneBuffer* lastAnim = nullptr;
 			for (auto& cmd : commands)
 			{
-				if (!cmd.material)
+				if (cmd.material == nullptr)
 					continue;
 
 				if (cmd.material != lastMaterial)
@@ -205,7 +200,7 @@ namespace MMMEngine {
 		}
 	}
 
-	void RenderManager::InitCache()
+	void RenderManager::ClearCache()
 	{
 		// 캐싱 컨테이너 초기화
 		m_objWorldMatMap.clear();
@@ -659,16 +654,151 @@ namespace MMMEngine {
 	}
 	void RenderManager::ShutDown()
 	{
-		// COM객체 초기화
-		m_pDevice->Release();
-		m_pDeviceContext->Release();
-		m_pSwapChain->Release();
+		// 1) 렌더가 돌고 있을 수 있으니, 가능하면 외부에서 Render loop를 멈춘 뒤 호출하는 게 정석
+	//    여기서는 내부에서 최대한 안전하게 정리.
 
+	// 2) 컨텍스트 바인딩 해제 (가장 중요!)
+		if (m_pDeviceContext)
+		{
+			// RenderTargets / Depth
+			ID3D11RenderTargetView* nullRTV[8] = {};
+			m_pDeviceContext->OMSetRenderTargets(8, nullRTV, nullptr);
 
-		//// 변수 초기화
-		m_worldMatrix = Matrix::Identity;
-		m_viewMatrix = Matrix::Identity;
-		m_projMatrix = Matrix::Identity;
+			// ShaderResourceView (VS/PS/GS/HS/DS/CS)
+			ID3D11ShaderResourceView* nullSRV[16] = {};
+			m_pDeviceContext->VSSetShaderResources(0, 16, nullSRV);
+			m_pDeviceContext->PSSetShaderResources(0, 16, nullSRV);
+			m_pDeviceContext->GSSetShaderResources(0, 16, nullSRV);
+			m_pDeviceContext->HSSetShaderResources(0, 16, nullSRV);
+			m_pDeviceContext->DSSetShaderResources(0, 16, nullSRV);
+			m_pDeviceContext->CSSetShaderResources(0, 16, nullSRV);
+
+			// Sampler
+			ID3D11SamplerState* nullSamp[16] = {};
+			m_pDeviceContext->VSSetSamplers(0, 16, nullSamp);
+			m_pDeviceContext->PSSetSamplers(0, 16, nullSamp);
+			m_pDeviceContext->CSSetSamplers(0, 16, nullSamp);
+
+			// ConstantBuffer
+			ID3D11Buffer* nullCB[16] = {};
+			m_pDeviceContext->VSSetConstantBuffers(0, 16, nullCB);
+			m_pDeviceContext->PSSetConstantBuffers(0, 16, nullCB);
+			m_pDeviceContext->GSSetConstantBuffers(0, 16, nullCB);
+			m_pDeviceContext->HSSetConstantBuffers(0, 16, nullCB);
+			m_pDeviceContext->DSSetConstantBuffers(0, 16, nullCB);
+			m_pDeviceContext->CSSetConstantBuffers(0, 16, nullCB);
+
+			// Shaders
+			m_pDeviceContext->VSSetShader(nullptr, nullptr, 0);
+			m_pDeviceContext->PSSetShader(nullptr, nullptr, 0);
+			m_pDeviceContext->GSSetShader(nullptr, nullptr, 0);
+			m_pDeviceContext->HSSetShader(nullptr, nullptr, 0);
+			m_pDeviceContext->DSSetShader(nullptr, nullptr, 0);
+			m_pDeviceContext->CSSetShader(nullptr, nullptr, 0);
+
+			// Input Assembler
+			m_pDeviceContext->IASetInputLayout(nullptr);
+			m_pDeviceContext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+			m_pDeviceContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
+			m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
+
+			// States
+			m_pDeviceContext->RSSetState(nullptr);
+			m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+			m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+
+			// 뭔가 남아있으면 정리
+			//m_pDeviceContext->ClearState();
+			//m_pDeviceContext->Flush();
+		}
+
+		// 3) 스왑체인(전체화면 가능성 대비)
+		if (m_pSwapChain)
+		{
+			// fullscreen 상태면 창모드로 돌려놓는 게 안전
+			BOOL fs = FALSE;
+			Microsoft::WRL::ComPtr<IDXGIOutput> out;
+			if (SUCCEEDED(m_pSwapChain->GetFullscreenState(&fs, out.GetAddressOf())) && fs)
+			{
+				m_pSwapChain->SetFullscreenState(FALSE, nullptr);
+			}
+		}
+
+		// 4) CPU측 캐시/참조 정리 (소유 X -> clear만)
+		m_renderCommands.clear();
+		m_objWorldMatMap.clear();
+		m_renderers.clear();
+		m_rendererIdMap.clear();
+		m_rObjIdx = 0;
+		m_nextRendererId = 1;
+
+		m_canvases.clear();
+		m_lights.clear();
+		m_pSkyboxMaterial.reset();
+
+		// 5) UI 리소스
+		m_uiSpriteFontCache.clear();
+		m_uiSpriteBatch.reset();
+
+		m_pUIBlendState.Reset();
+		m_pUIDepthState.Reset();
+		m_pUIBuffer.Reset();
+		m_pUIVShader.reset();
+		m_pUIPShader.reset();
+
+		// 6) 트랜스폼/카메라/스킨/쉐도우 버퍼
+		m_pTransbuffer.Reset();
+		m_pCambuffer.Reset();
+
+		m_pOffsetBuffer.Reset();
+		m_pAnimBuffer.Reset();
+
+		m_pShadowBuffer.Reset();
+		m_pShadowDSV.Reset();
+		m_pShadowTexture.Reset();
+		m_pShadowSRV.reset();   // ResPtr<Texture2D>
+		// (쉐도우 viewport는 값형이니 굳이 안 해도 되지만)
+		ZeroMemory(&m_shadowVP, sizeof(m_shadowVP));
+
+		// 7) 씬 렌더 타겟들
+		m_pSceneRTV.Reset();
+		m_pSceneSRV.Reset();
+		m_pSceneDSV.Reset();
+		m_pSceneDSB.Reset();
+		m_pSceneTexture.Reset();
+		ZeroMemory(&m_sceneViewport, sizeof(m_sceneViewport));
+
+		// 8) 백버퍼 타겟/DS
+		m_pRenderTargetView.Reset();
+		m_pDepthStencilView.Reset();
+		m_pDepthStencilBuffer.Reset();
+		ZeroMemory(&m_swapViewport, sizeof(m_swapViewport));
+
+		// 9) 공용 상태들
+		m_pLinearSampler.Reset();
+		m_pCompareSampler.Reset();
+		m_pPointSampler.Reset();
+		m_pDefaultRS.Reset();
+		m_pUIRS.Reset();
+		m_pDefaultBS.Reset();
+		m_DefaultRS.Reset();
+
+		// 10) 카메라/행렬/윈도우/사이즈 값 초기화
+		m_pMainCamera.Reset();
+		m_worldMatrix = DirectX::SimpleMath::Matrix::Identity;
+		m_viewMatrix = DirectX::SimpleMath::Matrix::Identity;
+		m_projMatrix = DirectX::SimpleMath::Matrix::Identity;
+
+		m_hWnd = nullptr;
+		m_clientWidth = m_clientHeight = 0;
+		m_sceneWidth = m_sceneHeight = 0;
+		useBackBuffer = false;
+		isOrtho = false;
+
+		// 11) 디바이스/컨텍스트/스왑체인 해제는 맨 마지막
+		m_pSwapChain.Reset();
+		m_pDeviceContext.Reset();
+		m_pDevice.Reset();
 	}
 	void RenderManager::Start()
 	{
@@ -994,7 +1124,8 @@ namespace MMMEngine {
 		m_pDeviceContext->OMSetBlendState(m_pDefaultBS.Get(), blendFactor, sampleMask);
 
 		m_pDeviceContext->RSSetViewports(1, &m_shadowVP);
-		m_pDeviceContext->PSSetSamplers(0, 1, m_pLinearSampler.GetAddressOf());
+		ID3D11SamplerState* samplers[] = { m_pLinearSampler.Get(), m_pCompareSampler.Get(), m_pPointSampler.Get() };
+		m_pDeviceContext->PSSetSamplers(0, 3, samplers);
 		m_pDeviceContext->RSSetState(m_pDefaultRS.Get());
 
 		// 리소스 업데이트
@@ -1397,7 +1528,7 @@ namespace MMMEngine {
 	void RenderManager::EndFrame()
 	{
 		// 캐싱된 데이터들 해제
-		InitCache();
+		ClearCache();
 
 		// Present our back buffer to our front buffer
 		m_pSwapChain->Present(m_rSyncInterval, 0);
@@ -1504,7 +1635,6 @@ namespace MMMEngine {
 
 	void RenderManager::BeginCanvas(Canvas* canvas)
 	{
-		(void)canvas;
 	}
 
 	void RenderManager::EndCanvas()

@@ -2067,7 +2067,7 @@ void MMMEngine::Editor::SceneViewWindow::RenderSceneToTexture(ID3D11DeviceContex
 	}
 
 	// Stencil 기반 마스크 생성 (선택된 오브젝트, 깊이 무시)
-	if (g_selectedGameObject.IsValid() && !g_selectedGameObject->IsDestroyed()
+	if (!m_ui2DMode && g_selectedGameObject.IsValid() && !g_selectedGameObject->IsDestroyed()
 		&& m_pPickingVS && m_pMaskPS && m_pStencilWriteState && m_pStencilTestState)
 	{
 		std::vector<uint32_t> selectedIds;
@@ -2120,7 +2120,7 @@ void MMMEngine::Editor::SceneViewWindow::RenderSceneToTexture(ID3D11DeviceContex
 	}
 
 	// 아웃라인 렌더링 (씬 뷰 전용)
-	if (g_selectedGameObject.IsValid() && !g_selectedGameObject->IsDestroyed()
+	if (!m_ui2DMode && g_selectedGameObject.IsValid() && !g_selectedGameObject->IsDestroyed()
 		&& m_pOutlinePS && m_pFullScreenVS && m_pOutlineCBuffer && m_pMaskSRV)
 	{
 		if (m_width > 0 && m_height > 0)
@@ -2154,6 +2154,10 @@ void MMMEngine::Editor::SceneViewWindow::RenderSceneToTexture(ID3D11DeviceContex
 			ID3D11ShaderResourceView* nullSRV2 = nullptr;
 			context->PSSetShaderResources(0, 1, &nullSRV2);
 		}
+	}
+	else
+	{
+		context->OMSetRenderTargets(1, &rtv, dsv);
 	}
 
 	if (m_ui2DMode)
