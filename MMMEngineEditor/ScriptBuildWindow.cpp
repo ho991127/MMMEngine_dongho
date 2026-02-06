@@ -10,11 +10,14 @@
 #include "StringHelper.h"
 #include "EditorRegistry.h"
 #include "InspectorWindow.h"
+#include "PhysxManager.h"
+#include "ResourceManager.h"
 
 #include <filesystem>
 
 namespace fs = std::filesystem;
 using namespace MMMEngine::Utility;
+
 
 namespace MMMEngine::Editor
 {
@@ -44,8 +47,11 @@ namespace MMMEngine::Editor
 
             RenderManager::Get().ClearCache();
 
+            PhysxManager::Get().UnbindScene();
             SceneManager::Get().ShutDown();
             ObjectManager::Get().ShutDown();
+            // Clear cache before unloading user DLL to avoid stale weak_ptr control blocks.
+            ResourceManager::Get().ClearCache();
 
             BehaviourManager::Get().UnloadUserScripts();
         }

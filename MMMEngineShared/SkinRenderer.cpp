@@ -36,7 +36,7 @@ RTTR_REGISTRATION
 }
 
 namespace MMMEngine {
-	void SkinRenderer::SetMesh(ResPtr<SkeletalMesh>& _mesh)
+	void SkinRenderer::SetMesh(ResPtr<SkeletalMesh> _mesh)
 	{
 		mesh = _mesh;
 	}
@@ -90,7 +90,6 @@ namespace MMMEngine {
 	void SkinRenderer::UnInitialize()
 	{
 		RenderManager::Get().RemoveRenderer(renderIndex);
-		mesh.reset();
 		mAnimator.Reset();
 		mAnimBuffer = nullptr;
 	}

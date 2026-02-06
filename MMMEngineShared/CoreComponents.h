@@ -19,5 +19,6 @@
 #include <Image.h>
 #include <Gage.h>
 #include <HandleGage.h>
+#include <UIMask.h>
 //#include <AudioSource.h>
 //#include <AudioListener.h>
