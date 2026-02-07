@@ -1,4 +1,4 @@
-#include "ObjectSerializer.h"
+﻿#include "ObjectSerializer.h"
 #include "GameObject.h"
 #include "Component.h"
 #include "MissingScriptBehaviour.h"
@@ -1451,17 +1451,6 @@ namespace MMMEngine
         {
             if (!GlobalRegistry::g_runtimeActive)
                 return;
-
-            static thread_local bool s_inInitialize = false;
-            if (s_inInitialize)
-                return;
-
-            struct InitScope
-            {
-                bool& flag;
-                InitScope(bool& f) : flag(f) { flag = true; }
-                ~InitScope() { flag = false; }
-            } scope(s_inInitialize);
 
             BehaviourManager::Get().InitializeBehaviours();
         };

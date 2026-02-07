@@ -92,6 +92,11 @@ void Update()
 	}
 
 	BehaviourManager::Get().InitializeBehaviours();
+	BehaviourManager::Get().CheckAndSortBehaviours();
+	BehaviourManager::Get().ExecuteAwake();
+	BehaviourManager::Get().ExecuteStart();
+	BehaviourManager::Get().ExecuteOnEnable();
+	BehaviourManager::Get().ClearInitializeCache();
 
 	TimeManager::Get().ConsumeFixedSteps([&](float fixedDt)
 		{
