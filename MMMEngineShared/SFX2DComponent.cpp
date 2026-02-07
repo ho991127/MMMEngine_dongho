@@ -24,11 +24,9 @@ void MMMEngine::SFX2DComponent::UnInitialize()
 			sfxChannel[i] = nullptr;
 		}
 	}
-	for (int i = 0; i < 3; i++) {
-		if (loopsfxChannel[i]) {
-			loopsfxChannel[i]->stop();
-			loopsfxChannel[i] = nullptr;
-		}
+	if (loopsfxChannel) {
+		loopsfxChannel->stop();
+		loopsfxChannel = nullptr;
 	}
 }
 
@@ -37,22 +35,17 @@ void MMMEngine::SFX2DComponent::PlaySFX2D(const std::string& id)
 	sfxChannel[AcquireSlot()] = AudioManager::Get().PlaySFX2D(id);
 }
 
-void MMMEngine::SFX2DComponent::PlayLoopSFX2D(const std::string& id, int slot)
+void MMMEngine::SFX2DComponent::PlayLoopSFX2D(const std::string& id)
 {
-	if (slot > 2 || slot < 0)
-		return;
-	StopLoopSFX2D(slot);
-	loopsfxChannel[slot] = AudioManager::Get().PlaySFX2D(id);
+
+	StopLoopSFX2D();
+	loopsfxChannel = AudioManager::Get().PlaySFX2D(id);
 }
 
-void MMMEngine::SFX2DComponent::StopLoopSFX2D(int slot)
+void MMMEngine::SFX2DComponent::StopLoopSFX2D()
 {
-	if (slot > 2 || slot < 0)
-		return;
-	if (loopsfxChannel[slot]) {
-		loopsfxChannel[slot]->stop();
-		loopsfxChannel[slot] = nullptr;
-	}
+	loopsfxChannel->stop();
+	loopsfxChannel = nullptr;
 }
 
 int MMMEngine::SFX2DComponent::AcquireSlot()

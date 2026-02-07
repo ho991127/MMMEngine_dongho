@@ -15,7 +15,7 @@ namespace MMMEngine {
 		friend class GameObject;
 
 		FMOD::Channel* sfxChannel[5] = {};
-		FMOD::Channel* loopsfxChannel[3] = {};
+		FMOD::Channel* loopsfxChannel = nullptr;
 		int mNextSlot = 0;
 		float x = 0.0f, y = 0.0f, z = 0.f;
 	protected:
@@ -29,8 +29,8 @@ namespace MMMEngine {
 		int AcquireSlot();
 	public:
 		void PlaySFX3D(const std::string& id);
-		void PlayLoopSFX3D(const std::string& id, int slot);
-		void StopLoopSFX3D(int slot);
+		void PlayLoopSFX3D(const std::string& id);
+		void StopLoopSFX3D();
 	};
 }
 

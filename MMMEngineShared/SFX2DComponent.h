@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "AudioManager.h"
 #include "Component.h"
 #include "Export.h"
@@ -12,7 +12,7 @@ namespace MMMEngine {
 		friend class ObjectManager;
 		friend class GameObject;
 		FMOD::Channel* sfxChannel[5] = {};
-		FMOD::Channel* loopsfxChannel[3] = {};
+		FMOD::Channel* loopsfxChannel= nullptr;
 		int mNextSlot = 0;
 
 	protected:
@@ -22,8 +22,8 @@ namespace MMMEngine {
 		int AcquireSlot();
 	public:
 		void PlaySFX2D(const std::string& id);
-		void PlayLoopSFX2D(const std::string& id, int slot);
-		void StopLoopSFX2D(int slot);
+		void PlayLoopSFX2D(const std::string& id);
+		void StopLoopSFX2D();
 	};
 }
 
