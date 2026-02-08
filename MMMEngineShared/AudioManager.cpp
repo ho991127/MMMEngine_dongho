@@ -19,7 +19,7 @@ void MMMEngine::AudioManager::StartUp()
 		return;
 
 	//3D 설정
-	const float dopplerScale = 1.0f;
+	const float dopplerScale = 0.0f;
 	const float distanceFactor = 1.0f;
 	const float rolloffScale = 1.0f;
 
@@ -62,6 +62,7 @@ void MMMEngine::AudioManager::Update()
 
 void MMMEngine::AudioManager::ShutDown()
 {
+	if (!mSystem) return;
 	if (mBGMGroup) mBGMGroup->stop();
 	if (mSFXGroup) mSFXGroup->stop();
 
@@ -91,6 +92,7 @@ void MMMEngine::AudioManager::SoundCacheClear()
 		if (it.second.sound)
 		{
 			it.second.sound->release();
+			it.second.sound = nullptr;
 		}
 	}
 }
@@ -214,7 +216,7 @@ FMOD::Channel* MMMEngine::AudioManager::PlaySFX2D(const std::string& id)
 		return nullptr;
 
 	ch->setVolume(1.0f);
-	if (mBGMGroup) ch->setChannelGroup(mSFXGroup);
+	if (mSFXGroup) ch->setChannelGroup(mSFXGroup);
 	ch->setPaused(false);
 
 	return ch;
@@ -233,7 +235,7 @@ FMOD::Channel* MMMEngine::AudioManager::PlaySFX3D(const std::string& id, float x
 		return nullptr;
 
 	ch->setVolume(1.0f);
-	if (mBGMGroup) ch->setChannelGroup(mSFXGroup);
+	if (mSFXGroup) ch->setChannelGroup(mSFXGroup);
 	ch->setPaused(false);
 	FMOD_VECTOR pos = V3(x, y, z);
 	FMOD_VECTOR vel = V3(0.0f, 0.0f, 0.0f);

@@ -15,7 +15,7 @@ namespace MMMEngine
 	protected:
 		SoundController() {};
 		virtual void Initialize() override {}
-		virtual void UnInitialize() override { AudioManager::Get().SoundCacheClear(); }
+		virtual void UnInitialize() override {}
 	public:
 		void RegisterSound(const std::string& csvPath) { AudioManager::Get().RegisterSound(csvPath); }
 		void ChangeBGMVolume(float volume) { MMMEngine::AudioManager::Get().BGMVolumeChange(volume); }

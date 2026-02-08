@@ -21,6 +21,8 @@ void MMMEngine::ListenerComponent::Update()
 	pos = transform->GetWorldPosition();
 	fwd = transform->GetWorldMatrix().Forward();
 	up = transform->GetWorldMatrix().Up();
+	fwd.Normalize();
+	up.Normalize();
 	AudioManager::Get().SetListenerPosition(pos.x, pos.y, pos.z,
 		fwd.x, fwd.y, fwd.z,
 		up.x, up.y, up.z);

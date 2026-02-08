@@ -44,8 +44,11 @@ void MMMEngine::SFX2DComponent::PlayLoopSFX2D(const std::string& id)
 
 void MMMEngine::SFX2DComponent::StopLoopSFX2D()
 {
-	loopsfxChannel->stop();
-	loopsfxChannel = nullptr;
+	if (loopsfxChannel)
+	{
+		loopsfxChannel->stop();
+		loopsfxChannel = nullptr;
+	}
 }
 
 int MMMEngine::SFX2DComponent::AcquireSlot()

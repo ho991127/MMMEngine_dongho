@@ -57,24 +57,38 @@ void MMMEngine::SFX3DComponent::Update()
 		}
 		ch->set3DAttributes(&pos, &vel);
 	}
+	if (loopsfxChannel)
+	{
+		bool playing = false;
+		if (loopsfxChannel->isPlaying(&playing) != FMOD_OK || !playing)
+			loopsfxChannel = nullptr;
+		else
+			loopsfxChannel->set3DAttributes(&pos, &vel);
+	}
 }
 
 void MMMEngine::SFX3DComponent::PlaySFX3D(const std::string& id)
 {
+	auto p = GetTransform()->GetWorldPosition();
+	x = p.x; y = p.y; z = p.z;
 	sfxChannel[AcquireSlot()] = AudioManager::Get().PlaySFX3D(id, x, y, z);
 }
 
 void MMMEngine::SFX3DComponent::PlayLoopSFX3D(const std::string& id)
 {
-
 	StopLoopSFX3D();
+	auto p = GetTransform()->GetWorldPosition();
+	x = p.x; y = p.y; z = p.z;
 	loopsfxChannel = AudioManager::Get().PlaySFX3D(id, x, y, z);
 }
 
 void MMMEngine::SFX3DComponent::StopLoopSFX3D()
 {
-	loopsfxChannel->stop();
-	loopsfxChannel = nullptr;
+	if (loopsfxChannel)
+	{
+		loopsfxChannel->stop();
+		loopsfxChannel = nullptr;
+	}
 }
 
 int MMMEngine::SFX3DComponent::AcquireSlot()
