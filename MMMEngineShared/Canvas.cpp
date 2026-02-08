@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 
+ 
+
 RTTR_REGISTRATION
 {
 	using namespace rttr;
@@ -41,6 +43,7 @@ void MMMEngine::Canvas::UnInitialize()
 {
 	RenderManager::Get().UnRegisterCanvas(this);
 	m_graphics.clear();
+	m_graphicIndex.clear();
 	Behaviour::UnInitialize();
 }
 
@@ -109,21 +112,29 @@ void MMMEngine::Canvas::RegisterGraphic(ObjPtr<Graphic> graphic)
 	if (!graphic)
 		return;
 
-	auto it = std::find(m_graphics.begin(), m_graphics.end(), graphic);
-	if (it != m_graphics.end())
+	if (m_graphicIndex.find(graphic) != m_graphicIndex.end())
 		return;
 
+	m_graphicIndex.emplace(graphic, m_graphics.size());
 	m_graphics.push_back(graphic);
 }
 
 void MMMEngine::Canvas::UnregisterGraphic(ObjPtr<Graphic> graphic)
 {
-	auto it = std::find(m_graphics.begin(), m_graphics.end(), graphic);
-	if (it == m_graphics.end())
+	auto it = m_graphicIndex.find(graphic);
+	if (it == m_graphicIndex.end() || m_graphics.empty())
 		return;
 
-	*it = m_graphics.back();
+	const size_t index = it->second;
+	const size_t lastIndex = m_graphics.size() - 1;
+	if (index != lastIndex)
+	{
+		auto lastGraphic = m_graphics[lastIndex];
+		m_graphics[index] = lastGraphic;
+		m_graphicIndex[lastGraphic] = index;
+	}
 	m_graphics.pop_back();
+	m_graphicIndex.erase(it);
 }
 
 const std::vector<MMMEngine::ObjPtr<MMMEngine::Graphic>>& MMMEngine::Canvas::GetGraphics() const
@@ -136,19 +147,25 @@ void MMMEngine::Canvas::RenderUI(RenderManager& renderer)
 	if (!IsActiveAndEnabled())
 		return;
 
-	std::vector<ObjPtr<Graphic>> graphics;
+	struct GraphicEntry
+	{
+		ObjPtr<Graphic> graphic;
+		int order = 0;
+	};
+
+	std::vector<GraphicEntry> graphics;
 	graphics.reserve(m_graphics.size());
 	for (auto& graphic : m_graphics)
 	{
-		if (!graphic.IsValid())
+		if (!graphic.IsValid() || graphic->IsDestroyed())
 			continue;
-		graphics.push_back(graphic);
+	graphics.push_back({ graphic, graphic->GetEffectiveRenderOrder() });
 	}
 
 	std::stable_sort(graphics.begin(), graphics.end(),
-		[](const ObjPtr<Graphic>& a, const ObjPtr<Graphic>& b)
+		[](const GraphicEntry& a, const GraphicEntry& b)
 		{
-			return a->GetRenderOrder() < b->GetRenderOrder();
+			return a.order < b.order;
 		});
 
 	if (graphics.empty())
@@ -176,7 +193,7 @@ void MMMEngine::Canvas::RenderUI(RenderManager& renderer)
 
 	auto drawMaskPass = [&renderer](const MaskEntry& mask, UINT depth, bool increment)
 	{
-		if (!mask.graphic.IsValid() || !mask.graphic->IsActiveAndEnabled())
+		if (!mask.graphic.IsValid() || mask.graphic->IsDestroyed() || !mask.graphic->IsActiveAndEnabled())
 			return;
 
 		renderer.SetUIMaskParams(true, mask.alphaThreshold);
@@ -194,23 +211,27 @@ void MMMEngine::Canvas::RenderUI(RenderManager& renderer)
 	auto collectMasks = [this](const ObjPtr<Graphic>& graphic, std::vector<MaskEntry>& out)
 	{
 		out.clear();
-		if (!graphic.IsValid())
+		if (!graphic.IsValid() || graphic->IsDestroyed())
 			return;
 
 		auto tr = graphic->GetTransform();
-		if (!tr.IsValid())
+		if (!tr.IsValid() || tr->IsDestroyed())
 			return;
 
-		for (auto t = tr; t != nullptr; t = t->GetParent())
+		for (auto t = tr; t.IsValid(); t = t->GetParent())
 		{
+			if (t->IsDestroyed())
+				break;
+
 			auto go = t->GetGameObject();
-			if (go.IsValid())
+			if (go.IsValid() && !go->IsDestroyed())
 			{
 				auto mask = go->GetComponent<UIMask>();
-				if (mask.IsValid() && mask->IsActiveAndEnabled())
+				if (mask.IsValid() && !mask->IsDestroyed() && mask->IsActiveAndEnabled())
 				{
 					auto maskGraphic = mask->GetTargetGraphic();
 					if (maskGraphic.IsValid()
+						&& !maskGraphic->IsDestroyed()
 						&& maskGraphic->IsActiveAndEnabled()
 						&& maskGraphic->GetCanvas().operator->() == this)
 					{
@@ -236,8 +257,11 @@ void MMMEngine::Canvas::RenderUI(RenderManager& renderer)
 	std::vector<MaskEntry> targetMasks;
 	targetMasks.reserve(8);
 
-	for (auto& graphic : graphics)
+	for (auto& entry : graphics)
 	{
+		auto& graphic = entry.graphic;
+		if (graphic->IsDestroyed())
+			continue;
 		if (!graphic->IsActiveAndEnabled())
 			continue;
 
